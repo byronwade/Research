@@ -1,0 +1,129 @@
+name: Publish canonical Research V6 through verified transfer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-canonical-v6-bore.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-canonical-research-v6-bore
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download canonical V6 source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive=/tmp/Research-repository-v6.zip
+          extracted=/tmp/research-v6-source
+          url='http://bore.pub:54892/Research-repository-v6.zip'
+
+          curl --fail --location --show-error --silent \
+            --connect-timeout 30 --max-time 300 \
+            "$url" -o "$archive"
+          unzip -tq "$archive"
+
+          rm -rf "$extracted"
+          mkdir -p "$extracted"
+          unzip -q "$archive" -d "$extracted"
+          mapfile -t roots < <(find "$extracted" -mindepth 1 -maxdepth 1 -print)
+          if [[ ${#roots[@]} -eq 1 && -d "${roots[0]}" ]]; then
+            extracted="${roots[0]}"
+          fi
+
+          required=(
+            README.md
+            AGENTS.md
+            docs/START-HERE.md
+            docs/README.md
+            docs/_meta/agent-routing.json
+            docs/_meta/implementation-build-plan.json
+            docs/_meta/requirements.json
+            scripts/agent-status.mjs
+            scripts/agent-context.mjs
+            package.json
+          )
+          for path in "${required[@]}"; do
+            [[ -f "$extracted/$path" ]] || { echo "Missing $path" >&2; exit 1; }
+          done
+
+          files="$(find "$extracted" -type f | wc -l | tr -d ' ')"
+          markdown="$(find "$extracted" -type f -name '*.md' | wc -l | tr -d ' ')"
+          [[ "$files" -ge 220 ]] || { echo "Only $files files" >&2; exit 1; }
+          [[ "$markdown" -ge 130 ]] || { echo "Only $markdown Markdown files" >&2; exit 1; }
+
+          node "$extracted/scripts/agent-status.mjs"
+          node "$extracted/scripts/agent-context.mjs" > /tmp/agent-context.txt
+
+          echo "path=$extracted" >> "$GITHUB_OUTPUT"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+          echo "markdown=$markdown" >> "$GITHUB_OUTPUT"
+
+      - name: Publish complete source tree
+        shell: bash
+        env:
+          SOURCE: ${{ steps.source.outputs.path }}
+          FILES: ${{ steps.source.outputs.files }}
+          MARKDOWN: ${{ steps.source.outputs.markdown }}
+        run: |
+          set -euo pipefail
+          rsync -a --delete --exclude '.git/' "$SOURCE/" "$GITHUB_WORKSPACE/"
+
+          mkdir -p docs/_meta
+          cat > docs/_meta/github-publication.json <<JSON
+          {
+            "schemaVersion": 1,
+            "repository": "${GITHUB_REPOSITORY}",
+            "branch": "main",
+            "sourceCommit": "78ee7bad8e6c18d211b4613ca62198df5eb3dd1a",
+            "canonicalSnapshot": "Research-repository-v6.zip",
+            "publishedAt": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "trackedFiles": ${FILES},
+            "markdownFiles": ${MARKDOWN},
+            "validation": {
+              "zipIntegrity": "passed",
+              "requiredFiles": "passed",
+              "agentStatus": "passed",
+              "agentContext": "passed"
+            },
+            "temporaryImporterRemoved": true
+          }
+          JSON
+
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: publish complete canonical Research specification'
+          git push origin HEAD:main
+
+      - name: Record transfer failure
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .bootstrap
+          cat > .bootstrap/bore-publication-failure.md <<'MD'
+          # Canonical V6 publication failed
+
+          The fixed-port transfer publisher failed before replacing `main`. No partial canonical tree was committed by this workflow.
+          MD
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .bootstrap/bore-publication-failure.md
+          git commit -m 'chore: record fixed-transfer publication failure' || true
+          git push origin HEAD:main || true
