@@ -3,11 +3,14 @@ name: Materialize complete Research V6 repository
 on:
   issues:
     types: [opened]
+  pull_request:
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 permissions:
   contents: write
   issues: write
+  pull-requests: read
 
 concurrency:
   group: materialize-research-v6
@@ -15,7 +18,10 @@ concurrency:
 
 jobs:
   materialize:
-    if: github.event_name == 'workflow_dispatch' || github.event.issue.title == '[system] materialize Research V6'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.issue.title == '[system] materialize Research V6') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.title == '[system] materialize Research V6')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
