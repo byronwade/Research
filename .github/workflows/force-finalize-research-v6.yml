@@ -1,0 +1,121 @@
+name: Force finalize canonical Research V6
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: force-finalize-canonical-research-v6
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.event.issue.title == '[system] force finalize Research V6'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Wait for canonical publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            git fetch origin main
+            git reset --hard origin/main
+            if [[ -f PRODUCT.md && -f ARCHITECTURE.md && -f ROADMAP.md && -f AGENTS.md && -f docs/START-HERE.md && -f docs/_meta/requirements.json && -f scripts/agent-context.mjs ]]; then
+              markdown_count="$(find docs -type f -name '*.md' | wc -l | tr -d ' ')"
+              if [[ "$markdown_count" -ge 134 ]]; then
+                echo "Canonical publication detected with $markdown_count documentation files."
+                exit 0
+              fi
+            fi
+            echo "Waiting for canonical publication; attempt $attempt/60."
+            sleep 10
+          done
+          echo 'Canonical publication did not appear within ten minutes.' >&2
+          exit 1
+
+      - name: Clean import machinery and install permanent CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap .canonical-import-v6 .canonical-v6-final .research-import research-import
+          rm -f MATERIALIZATION_DIAGNOSTIC.md
+          find .github/workflows -maxdepth 1 -type f \( \
+            -name 'import-v6*.yml' -o \
+            -name 'publish-canonical-v6*.yml' -o \
+            -name 'materialize-canonical-v6.yml' -o \
+            -name 'materialize-research-v6.yml' -o \
+            -name 'publish-existing-canonical-v6.yml' -o \
+            -name 'force-publish-existing-v6.yml' -o \
+            -name 'finalize-publication.yml' -o \
+            -name 'finalize-research-v6.yml' -o \
+            -name 'force-finalize-research-v6.yml' -o \
+            -name 'cleanup-failed-importers.yml' \
+          \) -delete
+
+          mkdir -p .github/workflows
+          cat > .github/workflows/docs.yml <<'YAML'
+          name: Documentation contracts
+
+          on:
+            pull_request:
+            push:
+              branches: [main]
+
+          permissions:
+            contents: read
+
+          jobs:
+            validate:
+              runs-on: ubuntu-latest
+              timeout-minutes: 15
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-node@v4
+                  with:
+                    node-version: 24
+                    cache: pnpm
+                - name: Enable Corepack
+                  run: corepack enable
+                - name: Install dependencies
+                  run: pnpm install --frozen-lockfile
+                - name: Validate repository contracts
+                  run: pnpm agent:check
+                - name: Ensure generated documentation state is committed
+                  run: git diff --exit-code
+          YAML
+
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs > /tmp/research-agent-context.txt
+          node scripts/validate-docs.mjs
+          node scripts/validate-tooling-catalog.mjs
+          node scripts/validate-notebooklm-catalog.mjs
+          node scripts/validate-agent-contract.mjs
+          node scripts/validate-doc-cohesion.mjs
+          node scripts/validate-product-readiness.mjs
+
+          git config user.name 'Research repository finalizer'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: finalize canonical Research repository'
+            git push origin main
+          fi
+
+      - name: Close trigger issue
+        if: success()
+        shell: bash
+        run: gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment 'Canonical Research V6 documentation is published, validated, and stripped of all one-time import machinery.'
