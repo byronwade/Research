@@ -1,4 +1,4 @@
-name: Publish validated Research V7 repository
+name: Publish final validated Research V7 tree
 
 on:
   pull_request:
@@ -9,121 +9,91 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: publish-research-v7
+  group: publish-final-research-v7
   cancel-in-progress: false
 
 jobs:
   publish:
-    if: github.event.pull_request.title == '[system] publish validated Research V7 patch'
+    if: github.event.pull_request.title == '[system] publish final Research V7'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out V7 patch payload
+      - name: Check out patch payload
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
-      - name: Reconstruct validated V7 patch
+      - name: Reconstruct validated patch
         id: patch
         shell: bash
         run: |
           set -euo pipefail
-          parts=/tmp/research-v7-patch-parts.txt
+          parts=/tmp/research-v7-parts.txt
           encoded=/tmp/research-v7.patch.xz.b64
           archive=/tmp/research-v7.patch.xz
           patch_file=/tmp/research-v7.patch
 
-          find .v7-patch -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
+          find .v7-final-patch -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
           count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 10 ]] || { echo "Expected 10 patch parts, found $count" >&2; exit 1; }
+          [[ "$count" -eq 20 ]] || { echo "Expected 20 patch parts, found $count" >&2; exit 1; }
 
           while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
           encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
-          [[ "$encoded_bytes" -eq 44488 ]] || { echo "Expected 44488 encoded bytes, found $encoded_bytes" >&2; exit 1; }
+          [[ "$encoded_bytes" -eq 781360 ]] || { echo "Expected 781360 encoded bytes, found $encoded_bytes" >&2; exit 1; }
 
           base64 --decode "$encoded" > "$archive"
-          expected='a81d545ce8f97a8360632ea3df214e274b2644eecd87aa8da46353cd383f9b9f'
+          expected='8fd159009f7af8452843082de056280338f76f2345730cc1f3a98a388b5a8424'
           actual="$(sha256sum "$archive" | awk '{print $1}')"
           [[ "$actual" == "$expected" ]] || { echo "Patch checksum mismatch: $actual" >&2; exit 1; }
           xz -t "$archive"
           xz --decompress --stdout "$archive" > "$patch_file"
-          grep -q 'release-engineering-and-change-control.md' "$patch_file"
-          grep -q 'validate-workflow-security.mjs' "$patch_file"
+          grep -q 'docs/00-foundation/requirements.md' "$patch_file"
+          grep -q 'docs/06-delivery/release-engineering-and-change-control.md' "$patch_file"
+          grep -q 'scripts/validate-workflow-security.mjs' "$patch_file"
           echo "patch_file=$patch_file" >> "$GITHUB_OUTPUT"
 
-      - name: Reconstruct canonical V6 baseline and apply V7
+      - name: Apply patch and validate canonical tree
         id: source
         shell: bash
         run: |
           set -euo pipefail
           patch_file='${{ steps.patch.outputs.patch_file }}'
-          staging=/tmp/research-v6-staging
-          parts=/tmp/research-v6-parts.txt
-          encoded=/tmp/research-v6.tar.xz.b64
-          archive=/tmp/research-v6.tar.xz
-          source=/tmp/research-v7-source
+          publish=/tmp/research-v7-publish
+          validate=/tmp/research-v7-validate
+          canonical_workflow=/tmp/research-docs.yml
 
-          rm -rf "$staging" "$source"
-          git clone --quiet --single-branch --branch agent/publish-research-v6-final \
-            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$staging"
+          rm -rf "$publish" "$validate"
+          git clone --quiet "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
+          cd "$publish"
+          git checkout main
+          [[ "$(git rev-parse HEAD)" == '6def81789085e33661e36727dc920616fb1e22aa' ]] || {
+            echo "main changed after patch generation; refusing stale publication" >&2
+            exit 1
+          }
 
-          find "$staging/.canonical-v6-final" -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
-          count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 120 ]] || { echo "Expected 120 canonical V6 parts, found $count" >&2; exit 1; }
+          git apply --index --binary --whitespace=error-all "$patch_file"
+          cp .github/workflows/docs.yml "$canonical_workflow"
 
-          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
-          base64 --decode "$encoded" > "$archive"
-          expected='62cec70fd932cd02469ad9e3304bdaa906a5eea923f5b8ffbdbabf2cd706da28'
-          actual="$(sha256sum "$archive" | awk '{print $1}')"
-          [[ "$actual" == "$expected" ]] || { echo "V6 archive checksum mismatch: $actual" >&2; exit 1; }
-          xz -t "$archive"
+          # The running workflow must remain present until this job completes.
+          # Workflow files are finalized through the connected GitHub integration
+          # immediately after the validated non-workflow commit lands.
+          git restore --staged --worktree .github/workflows
 
-          mkdir -p "$source"
-          tar -xJf "$archive" -C "$source"
-          v6_files="$(find "$source" -type f | wc -l | tr -d ' ')"
-          v6_markdown="$(find "$source" -type f -name '*.md' | wc -l | tr -d ' ')"
-          [[ "$v6_files" -eq 225 ]] || { echo "Expected 225 V6 files, found $v6_files" >&2; exit 1; }
-          [[ "$v6_markdown" -eq 195 ]] || { echo "Expected 195 V6 Markdown files, found $v6_markdown" >&2; exit 1; }
+          mkdir -p "$validate"
+          rsync -a --exclude '.git/' "$publish"/ "$validate"/
+          rm -rf "$validate/.github/workflows"
+          mkdir -p "$validate/.github/workflows"
+          cp "$canonical_workflow" "$validate/.github/workflows/docs.yml"
 
-          cd "$source"
-          patch --batch --forward -p1 < "$patch_file"
+          file_count="$(find "$validate" -type f | wc -l | tr -d ' ')"
+          markdown_count="$(find "$validate" -type f -name '*.md' | wc -l | tr -d ' ')"
+          [[ "$file_count" -eq 235 ]] || { echo "Expected 235 files, found $file_count" >&2; exit 1; }
+          [[ "$markdown_count" -eq 204 ]] || { echo "Expected 204 Markdown files, found $markdown_count" >&2; exit 1; }
 
-          required=(
-            README.md
-            AGENTS.md
-            PRODUCT.md
-            ARCHITECTURE.md
-            ROADMAP.md
-            SECURITY.md
-            docs/START-HERE.md
-            docs/README.md
-            docs/00-foundation/requirements.md
-            docs/02-architecture/schema-contract-and-data-evolution.md
-            docs/05-security/secure-software-supply-chain.md
-            docs/05-security/secrets-encryption-and-configuration.md
-            docs/05-security/web-application-security-baseline.md
-            docs/06-delivery/release-engineering-and-change-control.md
-            docs/06-delivery/performance-capacity-and-load-engineering.md
-            docs/_meta/agent-routing.json
-            docs/_meta/build-plan.json
-            docs/_meta/implementation-status.json
-            scripts/agent-status.mjs
-            scripts/agent-context.mjs
-            scripts/validate-workflow-security.mjs
-            package.json
-          )
-          for path in "${required[@]}"; do
-            [[ -f "$source/$path" ]] || { echo "Missing canonical V7 file: $path" >&2; exit 1; }
-          done
-
-          file_count="$(find "$source" -type f | wc -l | tr -d ' ')"
-          markdown_count="$(find "$source" -type f -name '*.md' | wc -l | tr -d ' ')"
-          [[ "$file_count" -eq 235 ]] || { echo "Expected 235 V7 files, found $file_count" >&2; exit 1; }
-          [[ "$markdown_count" -eq 204 ]] || { echo "Expected 204 V7 Markdown files, found $markdown_count" >&2; exit 1; }
-
+          cd "$validate"
           node scripts/agent-status.mjs
           node scripts/agent-context.mjs > /tmp/research-v7-agent-context.txt
           node scripts/validate-docs.mjs
@@ -134,24 +104,14 @@ jobs:
           node scripts/validate-product-readiness.mjs
           node scripts/validate-workflow-security.mjs
 
-          echo "source=$source" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
-      - name: Replace main with canonical V7 non-workflow tree
+      - name: Publish validated non-workflow tree to main
         shell: bash
         run: |
           set -euo pipefail
-          source='${{ steps.source.outputs.source }}'
-          publish=/tmp/research-v7-publish
-          rm -rf "$publish"
-          git clone --quiet "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
+          publish='${{ steps.source.outputs.publish }}'
           cd "$publish"
-          git checkout main
-
-          rsync -a --delete \
-            --exclude '.git/' \
-            --exclude '.github/workflows/' \
-            "$source"/ "$publish"/
-
           git config user.name 'Research repository publisher'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
@@ -162,4 +122,4 @@ jobs:
       - name: Close trigger pull request
         if: success()
         shell: bash
-        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The complete validated Research V7 specification has been published to main. Repository workflows will now be finalized through the connected GitHub integration.'
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The validated production-ready Research V7 documentation tree has been published to main. Workflow cleanup is being finalized through the connected GitHub integration.'
