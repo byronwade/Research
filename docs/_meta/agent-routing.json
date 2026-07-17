@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "entry": ["AGENTS.md", "docs/START-HERE.md", "docs/README.md"],
+  "alwaysRead": ["PRODUCT.md", "ARCHITECTURE.md", "docs/06-delivery/implementation-status.md"],
+  "domains": {
+    "foundation": ["docs/00-foundation/product-brief.md", "docs/00-foundation/product-principles.md"],
+    "product": ["docs/01-product/project-workspace.md", "docs/01-product/chat.md", "docs/01-product/documents-and-canvas.md", "docs/01-product/sources.md", "docs/01-product/public-private-publishing.md", "docs/01-product/research-studio.md"],
+    "architecture": ["docs/02-architecture/system-architecture.md", "docs/02-architecture/domain-model.md", "docs/02-architecture/canonical-content-and-no-drift.md", "docs/02-architecture/developer-platform-api.md"],
+    "ai": ["docs/03-ai/research-orchestrator.md", "docs/03-ai/claims-evidence-citations.md", "docs/03-ai/multi-agent-orchestration.md", "docs/03-ai/project-memory.md"],
+    "sources": ["docs/04-sources/ingestion-pipeline.md", "docs/04-sources/indexing-and-retrieval.md", "docs/04-sources/github-integration.md"],
+    "security": ["docs/05-security/threat-model.md", "docs/05-security/data-governance.md"],
+    "delivery": ["ROADMAP.md", "docs/06-delivery/implementation-plan.md", "docs/06-delivery/implementation-status.md"],
+    "reference": ["docs/07-reference/official-references.md"],
+    "build": ["docs/08-build/README.md"]
+  },
+  "requirementPrefixes": {
+    "PROJ": ["product", "architecture", "security"],
+    "UX": ["product"],
+    "CHAT": ["product", "ai", "architecture"],
+    "DOC": ["product", "architecture"],
+    "SRC": ["product", "sources", "security"],
+    "EVID": ["ai", "sources"],
+    "RET": ["sources", "security"],
+    "AI": ["ai", "architecture"],
+    "RES": ["ai", "delivery"],
+    "AGENT": ["ai", "security"],
+    "MEM": ["ai", "architecture"],
+    "MAINT": ["architecture", "ai"],
+    "PUB": ["product", "architecture", "security"],
+    "GH": ["sources", "security"],
+    "API": ["architecture", "security"],
+    "SEC": ["security"],
+    "OPS": ["architecture", "security", "delivery"],
+    "A11Y": ["product", "security", "delivery"],
+    "I18N": ["product", "architecture", "delivery"],
+    "READY": ["delivery", "security"]
+  }
+}
