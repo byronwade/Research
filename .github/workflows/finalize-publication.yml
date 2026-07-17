@@ -1,0 +1,117 @@
+name: Finalize Research repository publication
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/finalize-publication.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-research-publication
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate canonical repository
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required=(
+            README.md
+            AGENTS.md
+            docs/START-HERE.md
+            docs/README.md
+            docs/_meta/agent-routing.json
+            docs/_meta/implementation-build-plan.json
+            docs/_meta/requirements.json
+            package.json
+            scripts/agent-status.mjs
+            scripts/agent-context.mjs
+          )
+          for path in "${required[@]}"; do
+            [[ -f "$path" ]] || { echo "Missing canonical file: $path" >&2; exit 1; }
+          done
+
+          tracked_count="$(git ls-files | wc -l | tr -d ' ')"
+          markdown_count="$(git ls-files '*.md' | wc -l | tr -d ' ')"
+          [[ "$tracked_count" -ge 200 ]] || { echo "Only $tracked_count tracked files were found." >&2; exit 1; }
+          [[ "$markdown_count" -ge 120 ]] || { echo "Only $markdown_count Markdown files were found." >&2; exit 1; }
+
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs > /tmp/agent-context.txt
+          git diff --check
+
+          corepack enable
+          pnpm agent:check
+
+      - name: Remove import staging and write publication receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          validated_from="$(git rev-parse HEAD)"
+          tracked_count="$(git ls-files | wc -l | tr -d ' ')"
+          markdown_count="$(git ls-files '*.md' | wc -l | tr -d ' ')"
+          requirement_count="$(node - <<'NODE'
+          const fs = require('fs');
+          const value = JSON.parse(fs.readFileSync('docs/_meta/requirements.json', 'utf8'));
+          const candidates = [value.requirements, value.items, value];
+          const array = candidates.find(Array.isArray) || [];
+          process.stdout.write(String(array.length));
+          NODE
+          )"
+          slice_count="$(node - <<'NODE'
+          const fs = require('fs');
+          const value = JSON.parse(fs.readFileSync('docs/_meta/implementation-build-plan.json', 'utf8'));
+          const candidates = [value.slices, value.items, value];
+          const array = candidates.find(Array.isArray) || [];
+          process.stdout.write(String(array.length));
+          NODE
+          )"
+
+          rm -rf .research-import research-import
+          find . -maxdepth 2 -type f \( -iname '*segment*' -o -iname '*.part*' -o -iname '*chunk*' \) -delete
+          rm -f .github/workflows/import-v6.yml
+          rm -f .github/workflows/import-v6-final.yml
+          rm -f .github/workflows/finalize-publication.yml
+
+          mkdir -p docs/_meta
+          cat > docs/_meta/github-publication.json <<JSON
+          {
+            "schemaVersion": 1,
+            "repository": "${GITHUB_REPOSITORY}",
+            "branch": "main",
+            "validatedFromCommit": "${validated_from}",
+            "publishedAt": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "trackedFiles": ${tracked_count},
+            "markdownFiles": ${markdown_count},
+            "canonicalRequirements": ${requirement_count},
+            "implementationSlices": ${slice_count},
+            "validation": {
+              "agentStatus": "passed",
+              "agentContext": "passed",
+              "agentCheck": "passed",
+              "gitDiffCheck": "passed"
+            },
+            "temporaryImportArtifactsRemoved": true
+          }
+          JSON
+
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'chore: finalize GitHub repository publication'
+          git push origin HEAD:main
