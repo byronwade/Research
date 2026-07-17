@@ -1,4 +1,4 @@
-name: Publish validated Research V7 repository
+name: Publish validated Research V7 delta
 
 on:
   pull_request:
@@ -14,49 +14,80 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event.pull_request.title == '[system] publish validated Research V7'
+    if: github.event.pull_request.title == '[system] publish validated Research V7 delta'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out trigger branch
+      - name: Check out delta payload
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Download, reconstruct, and validate canonical source
+      - name: Reconstruct validated V7 delta
+        id: delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          parts=/tmp/research-v7-delta-parts.txt
+          encoded=/tmp/research-v7-delta.tar.xz.b64
+          archive=/tmp/research-v7-delta.tar.xz
+          delta=/tmp/research-v7-delta
+
+          find .v7-delta -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
+          count="$(wc -l < "$parts" | tr -d ' ')"
+          [[ "$count" -eq 4 ]] || { echo "Expected 4 delta parts, found $count" >&2; exit 1; }
+
+          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+          encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
+          [[ "$encoded_bytes" -eq 144616 ]] || { echo "Expected 144616 encoded bytes, found $encoded_bytes" >&2; exit 1; }
+
+          base64 --decode "$encoded" > "$archive"
+          expected='922340b61f03c0d94a86b0b8cbab0e436fcafc5e43f942050dbdda1a31481f96'
+          actual="$(sha256sum "$archive" | awk '{print $1}')"
+          [[ "$actual" == "$expected" ]] || { echo "Delta checksum mismatch: $actual" >&2; exit 1; }
+          xz -t "$archive"
+
+          rm -rf "$delta"
+          mkdir -p "$delta"
+          tar -xJf "$archive" -C "$delta"
+          delta_count="$(find "$delta" -type f | wc -l | tr -d ' ')"
+          [[ "$delta_count" -eq 31 ]] || { echo "Expected 31 delta files, found $delta_count" >&2; exit 1; }
+          echo "delta=$delta" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble and validate the complete V7 tree
         id: source
         shell: bash
         run: |
           set -euo pipefail
+          delta='${{ steps.delta.outputs.delta }}'
+          publish=/tmp/research-v7-publish
+          validate=/tmp/research-v7-validate
 
-          downloaded=/tmp/research-v7.downloaded.b64
-          encoded=/tmp/research-v7.tar.xz.b64
-          archive=/tmp/research-v7.tar.xz
-          source=/tmp/research-v7-source
-          cookies=/tmp/research-v7-vercel.cookies
-          payload_url='https://research-v7-payload-path-test-99f196n88-wades-web-dev.vercel.app/payload.txt?_vercel_share=2teFwRc74grL6EWKZg6wr72nFV3qYc6G'
+          rm -rf "$publish" "$validate"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
+          cd "$publish"
+          git checkout main
 
-          curl --fail --silent --show-error --location --retry 3 \
-            --cookie-jar "$cookies" --cookie "$cookies" \
-            "$payload_url" -o "$downloaded"
-          tr -d '\r\n\t ' < "$downloaded" > "$encoded"
+          rm -rf \
+            .bootstrap \
+            .canonical-import-v6 \
+            .canonical-v6-final \
+            .canonical-v7 \
+            .research-import \
+            research-import \
+            .publication
+          rm -f MATERIALIZATION_DIAGNOSTIC.md PROJECT_STATUS.md TREE_API_TEST.txt TREE_TEST_2.md
 
-          encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
-          [[ "$encoded_bytes" -eq 502008 ]] || { echo "Expected 502008 encoded bytes, found $encoded_bytes" >&2; head -c 200 "$encoded" >&2 || true; exit 1; }
-          [[ "$(head -c 8 "$encoded")" == '/Td6WFoA' ]] || { echo 'Downloaded payload does not have the expected XZ base64 prefix.' >&2; exit 1; }
+          rsync -a --exclude '.github/workflows/' "$delta"/ "$publish"/
 
-          base64 --decode "$encoded" > "$archive"
-          expected='a1a8aa88a538a3ec6f63f4a3517c5e55a00df15a6bced8053f07ae2b7962576e'
-          actual="$(sha256sum "$archive" | awk '{print $1}')"
-          [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
-          xz -t "$archive"
-
-          rm -rf "$source"
-          mkdir -p "$source"
-          tar -xJf "$archive" -C "$source"
+          mkdir -p "$validate"
+          rsync -a --exclude '.git/' "$publish"/ "$validate"/
+          rm -rf "$validate/.github/workflows"
+          mkdir -p "$validate/.github/workflows"
+          cp "$delta/.github/workflows/docs.yml" "$validate/.github/workflows/docs.yml"
 
           required=(
             README.md
@@ -83,15 +114,15 @@ jobs:
             package.json
           )
           for path in "${required[@]}"; do
-            [[ -f "$source/$path" ]] || { echo "Missing canonical file: $path" >&2; exit 1; }
+            [[ -f "$validate/$path" ]] || { echo "Missing canonical file: $path" >&2; exit 1; }
           done
 
-          file_count="$(find "$source" -type f | wc -l | tr -d ' ')"
-          markdown_count="$(find "$source" -type f -name '*.md' | wc -l | tr -d ' ')"
-          [[ "$file_count" -eq 235 ]] || { echo "Expected 235 files, found $file_count" >&2; exit 1; }
+          file_count="$(find "$validate" -type f | wc -l | tr -d ' ')"
+          markdown_count="$(find "$validate" -type f -name '*.md' | wc -l | tr -d ' ')"
+          [[ "$file_count" -eq 235 ]] || { echo "Expected 235 files, found $file_count" >&2; find "$validate" -type f | sort >&2; exit 1; }
           [[ "$markdown_count" -eq 204 ]] || { echo "Expected 204 Markdown files, found $markdown_count" >&2; exit 1; }
 
-          cd "$source"
+          cd "$validate"
           node scripts/agent-status.mjs
           node scripts/agent-context.mjs > /tmp/research-v7-agent-context.txt
           node scripts/validate-docs.mjs
@@ -102,24 +133,14 @@ jobs:
           node scripts/validate-product-readiness.mjs
           node scripts/validate-workflow-security.mjs
 
-          echo "source=$source" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
-      - name: Publish canonical tree to main
+      - name: Publish canonical non-workflow tree to main
         shell: bash
         run: |
           set -euo pipefail
-          source='${{ steps.source.outputs.source }}'
-          publish=/tmp/research-v7-publish
-          rm -rf "$publish"
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
+          publish='${{ steps.source.outputs.publish }}'
           cd "$publish"
-          git checkout main
-
-          rsync -a --delete \
-            --exclude '.git/' \
-            --exclude '.github/workflows/' \
-            "$source"/ "$publish"/
-
           git config user.name 'Research repository publisher'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
@@ -130,4 +151,4 @@ jobs:
       - name: Close trigger pull request
         if: success()
         shell: bash
-        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The validated Research V7 specification has been published to main. Temporary importer files and workflows will be removed by the repository finalization step.'
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The validated Research V7 documentation and control-plane delta has been published to main. The repository finalization step will now install the canonical workflow and remove one-time publisher files.'
