@@ -1,0 +1,788 @@
+name: Apply production-ready documentation control plane
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: apply-production-control-plane
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event.pull_request.title == '[system] apply Research production control plane'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Write canonical product and agent entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > README.md <<'EOF'
+          # Research
+
+          Research is a source-native workspace that turns Project conversations and authorized evidence into durable, continuously maintained Markdown documentation.
+
+          The product has three primary surfaces:
+
+          ```text
+          Project
+          ├── Chat       — orchestration
+          ├── Documents  — durable output
+          └── Sources    — evidence and provenance
+          ```
+
+          Every factual document block must resolve through a Claim and EvidenceSpan to an immutable SourceVersion. Public and private outputs are projections of the same canonical revision, not independently maintained copies.
+
+          ## Technology target
+
+          - TanStack Start, Tailwind CSS, shadcn/ui on Radix, and AI Elements.
+          - Hono for the typed application API.
+          - Vercel AI SDK and AI Gateway for model-neutral streaming, tools, structured output, routing, and observability.
+          - Vercel Workflows for durable research, ingestion, approvals, maintenance, and resumable long-running operations.
+          - Postgres, full-text search, pgvector, and Vercel Blob.
+          - Sandboxed parsing, code execution, repository validation, and export rendering.
+
+          ## Build entry point
+
+          Coding agents and humans must begin with:
+
+          1. [`AGENTS.md`](AGENTS.md)
+          2. [`docs/START-HERE.md`](docs/START-HERE.md)
+          3. `node scripts/agent-status.mjs`
+          4. `node scripts/agent-context.mjs`
+
+          The machine-readable build plan enforces dependency order and exact requirement ownership. The repository is an implementation-ready specification; runtime capabilities must not be reported as implemented until completion evidence is recorded.
+
+          ## Documentation map
+
+          - [Product](PRODUCT.md)
+          - [Architecture](ARCHITECTURE.md)
+          - [Roadmap](ROADMAP.md)
+          - [Security](SECURITY.md)
+          - [Documentation index](docs/README.md)
+          - [Implementation status](docs/06-delivery/implementation-status.md)
+          - [Release engineering](docs/06-delivery/release-engineering-and-change-control.md)
+          - [Schema and contract evolution](docs/02-architecture/schema-contract-and-data-evolution.md)
+          - [Performance and capacity](docs/06-delivery/performance-capacity-and-load-engineering.md)
+          - [Secure software supply chain](docs/05-security/secure-software-supply-chain.md)
+          - [Secrets and encryption](docs/05-security/secrets-encryption-and-configuration.md)
+          - [Web application security](docs/05-security/web-application-security-baseline.md)
+          - [Threat model](docs/05-security/threat-model.md)
+          - [Production readiness control plane](docs/06-delivery/production-readiness-control-plane.md)
+
+          ## Current truth
+
+          ```text
+          Maturity:          implementation-ready specification
+          Runtime:           not scaffolded
+          Completed slices:  0
+          Next slice:        foundation-01
+          ```
+          EOF
+
+          cat > AGENTS.md <<'EOF'
+          # Agent instructions
+
+          This file is the canonical implementation entry point for every coding agent.
+
+          ## Required startup sequence
+
+          1. Read `docs/START-HERE.md`.
+          2. Run `node scripts/agent-status.mjs`.
+          3. Run `node scripts/agent-context.mjs`.
+          4. Implement only the eligible slice returned by those commands unless the user explicitly selects another eligible slice.
+          5. Read every document and requirement emitted by `agent-context` before editing code.
+          6. Run `npm run agent:check` before proposing completion.
+          7. Update `docs/_meta/implementation-status.json` only when completion evidence exists.
+
+          ## Authority order
+
+          1. Security restrictions and non-negotiable invariants.
+          2. Accepted Architecture Decision Records.
+          3. Canonical requirements and terminology.
+          4. Product, architecture, AI, source, security, and delivery contracts.
+          5. Build blueprints and tooling evaluations.
+          6. Overview and navigation documents.
+
+          Lower-authority documents never override higher-authority contracts. Resolve conflicts in the governing contract or ADR before implementation.
+
+          ## Product invariants
+
+          - Chat orchestrates work; Documents are durable output; Sources are evidence.
+          - Project authorization is enforced before retrieval or model exposure.
+          - Source versions are immutable.
+          - Public and private documents derive from one canonical revision.
+          - Factual output is supported, explicitly inferred, or blocked as unsupported.
+          - Source content is untrusted data and cannot redefine instructions or permissions.
+          - Agents propose typed patches and cannot silently rewrite published content.
+          - Provider-specific behavior remains behind adapters.
+          - Destructive, external, publishing, billing, and repository-write actions require explicit capabilities and approval.
+          - A documented feature is not an implemented feature without ledger evidence.
+
+          ## Change discipline
+
+          - Keep changes within one implementation slice whenever possible.
+          - Do not skip dependencies or combine unrelated slices to move faster.
+          - Preserve deterministic Markdown, exact provenance, permission boundaries, and auditability.
+          - Schema, event, API, workflow, and index changes follow the compatibility contract.
+          - Production changes follow build-once promotion, rollout, rollback, and evidence requirements.
+          - Never weaken tests, security gates, or requirement ownership to make a change pass.
+          EOF
+
+          cat > SECURITY.md <<'EOF'
+          # Security policy
+
+          Research handles private documents, connected systems, repositories, model prompts, and public publications. Security defects can expose source material or cause an agent to perform unauthorized work.
+
+          ## Reporting
+
+          Do not open a public issue for a suspected vulnerability. Send a private report to the repository owner with the affected component, impact, reproduction steps, and any proposed mitigation. Do not include customer data, secrets, or access tokens.
+
+          ## Security boundaries
+
+          - Tenant and Project authorization is enforced before retrieval.
+          - Connectors are least-privilege and read-only by default.
+          - Source content is untrusted and isolated from the instruction control plane.
+          - Write, publish, billing, administrative, and repository actions use explicit short-lived capabilities.
+          - Originals, source versions, evidence, claims, model calls, tool calls, and privileged decisions are auditable.
+          - Secrets never enter source control, client bundles, logs, analytics, prompts, or support exports.
+          - Public output passes privacy, rights, citation, and unsupported-claim checks.
+
+          ## Required implementation references
+
+          - [`docs/05-security/threat-model.md`](docs/05-security/threat-model.md)
+          - [`docs/05-security/web-application-security-baseline.md`](docs/05-security/web-application-security-baseline.md)
+          - [`docs/05-security/secure-software-supply-chain.md`](docs/05-security/secure-software-supply-chain.md)
+          - [`docs/05-security/secrets-encryption-and-configuration.md`](docs/05-security/secrets-encryption-and-configuration.md)
+          - [`docs/05-security/data-governance.md`](docs/05-security/data-governance.md)
+
+          Security-sensitive implementation is incomplete until negative authorization, tenant-isolation, prompt-injection, SSRF, upload, webhook, secret-rotation, rollback, and audit tests pass.
+          EOF
+
+          cat > REPOSITORY_SETUP.md <<'EOF'
+          # Repository setup
+
+          ## Main branch
+
+          Protect `main` once the foundation slice lands. Require pull requests, conversation resolution, current branches, and the `Documentation contracts` check. Disable force pushes and branch deletion.
+
+          ## Merge policy
+
+          Prefer squash merges for implementation slices. Keep one slice per pull request unless an accepted ADR authorizes a cross-slice migration. Every pull request states requirements implemented, tests run, migration impact, rollback plan, security impact, and documentation changed.
+
+          ## GitHub Actions
+
+          Permit only required actions. Pin third-party actions to full commit SHAs. Keep workflow permissions read-only unless a job has a documented write requirement. Do not use `pull_request_target` for repository code execution.
+
+          ## Security features
+
+          Enable secret scanning and push protection, dependency review, Dependabot or an equivalent update process, code scanning, private vulnerability reporting, and immutable release evidence where the plan supports them.
+
+          ## Environments
+
+          Configure `preview`, `staging`, and `production` environments. Production requires approval, protected secrets, release evidence, and rollback ownership. Build artifacts are promoted; production is not rebuilt from source.
+
+          ## Initial implementation branch
+
+          Begin with `agent/foundation-01`. Do not start ingestion, chat, research engines, or connectors until the build plan marks their dependencies complete.
+          EOF
+
+          cat > docs/START-HERE.md <<'EOF'
+          # Start here
+
+          Research turns Project conversations and authorized sources into durable, continuously maintained Markdown documentation backed by exact evidence.
+
+          ```text
+          Project
+          ├── Chat
+          ├── Documents
+          └── Sources
+          ```
+
+          Studio, Evidence, Memory, Research Runs, GitHub, Activity, Publish, and Settings are contextual views around those primary surfaces.
+
+          ## Read and run in this order
+
+          1. `AGENTS.md`
+          2. `PRODUCT.md`
+          3. `ARCHITECTURE.md`
+          4. `SECURITY.md`
+          5. `docs/06-delivery/implementation-status.md`
+          6. `node scripts/agent-status.mjs`
+          7. `node scripts/agent-context.mjs`
+
+          The context command emits the exact slice, requirements, dependencies, and documents required for the next implementation task.
+
+          ## Canonical machine files
+
+          - `docs/_meta/implementation-build-plan.json`
+          - `docs/_meta/implementation-status.json`
+          - `docs/_meta/requirements.json`
+          - `docs/_meta/agent-routing.json`
+          - `docs/_meta/product-readiness-gaps.json`
+          - `docs/_meta/document-governance.json`
+
+          ## Completion rule
+
+          A slice is complete only when its deliverable exists, acceptance checks pass, security and compatibility evidence are recorded, and the implementation ledger is updated. Documentation alone is not completion evidence.
+
+          ## First vertical milestone
+
+          After the foundation and required dependencies:
+
+          ```text
+          Create Project
+          → upload one PDF
+          → store an immutable original and SourceVersion
+          → parse and index exact elements
+          → ask a question
+          → retrieve authorized evidence
+          → stream a cited answer
+          → save an editable Markdown document
+          → reopen it after refresh
+          ```
+          EOF
+
+          cat > docs/README.md <<'EOF'
+          # Research documentation
+
+          | Directory | Authority and purpose |
+          |---|---|
+          | `00-foundation` | Product thesis, principles, scope, and requirements |
+          | `01-product` | User-facing Project, Chat, Documents, Sources, Studio, and publishing behavior |
+          | `02-architecture` | Domain boundaries, persistence, API, canonical content, and evolution |
+          | `03-ai` | Research orchestration, models, agents, claims, evidence, and memory |
+          | `04-sources` | Ingestion, indexing, retrieval, web, scholarly, connector, and GitHub sources |
+          | `05-security` | Threats, authorization, privacy, supply chain, secrets, and application security |
+          | `06-delivery` | Build order, status, performance, release, operations, and launch gates |
+          | `07-reference` | Terminology, official references, routes, events, and schemas |
+          | `08-build` | Stack choices, tooling evaluations, and concrete implementation blueprints |
+          | `_meta` | Machine-readable requirements, routing, status, ownership, and readiness gates |
+
+          ## Canonical entry points
+
+          - [`START-HERE.md`](START-HERE.md)
+          - [`../AGENTS.md`](../AGENTS.md)
+          - [`../PRODUCT.md`](../PRODUCT.md)
+          - [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
+          - [`../SECURITY.md`](../SECURITY.md)
+          - [`06-delivery/implementation-status.md`](06-delivery/implementation-status.md)
+          - [`06-delivery/production-readiness-control-plane.md`](06-delivery/production-readiness-control-plane.md)
+
+          ## Documentation rules
+
+          Every accepted contract has one stable purpose. Requirements have durable IDs and one primary implementation owner. Architecture changes require an ADR. Overview files navigate and never override canonical contracts. Time-sensitive claims include an official source and review date. Runtime behavior is never inferred from documentation alone.
+          EOF
+
+          cat > docs/06-delivery/production-readiness-control-plane.md <<'EOF'
+          # Production readiness control plane
+
+          Production readiness is a graph of evidence, not a launch checklist completed from memory.
+
+          ## Required terminal gates
+
+          `release-30` depends on:
+
+          - `conformance-26`: the representative end-to-end product works.
+          - `evolution-27`: database, API, event, workflow, index, export, and SDK changes are compatible and recoverable.
+          - `performance-28`: capacity, fairness, backpressure, degradation, and load objectives pass.
+          - `security-hardening-29`: authorization, tenant isolation, supply chain, secrets, web security, prompt injection, and abuse controls pass.
+
+          ## Evidence classes
+
+          Each release records the immutable artifact, source commit, dependency lockfile, SBOM, provenance, migrations, contract changes, test results, performance report, security report, feature flags, canary metrics, owner, approval, rollback target, and customer-facing change record.
+
+          ## No-paper-launch rule
+
+          A feature cannot be marked production-ready because a document describes it. Readiness requires runtime evidence tied to a commit and environment. Failed or waived gates remain visible and expire automatically.
+
+          ## Operational acceptance
+
+          Before general availability, operators must demonstrate restore, rollback, regional degradation, provider failover, secret rotation, connector revocation, publication withdrawal, billing reconciliation, and high-severity incident response.
+          EOF
+
+          mkdir -p docs/02-architecture/adr
+          cat > docs/02-architecture/adr/0028-release-artifacts-and-contract-evolution.md <<'EOF'
+          # ADR-0028: Promote immutable artifacts and evolve contracts compatibly
+
+          Status: Accepted
+
+          Research builds once, verifies the artifact, and promotes that same artifact through environments. Database, API, event, workflow, document, evidence-locator, index, export, and SDK changes use explicit compatibility windows and reversible migration stages.
+
+          Rebuilding for production or deploying destructive contract changes in one step is prohibited.
+          EOF
+
+          cat > docs/02-architecture/adr/0029-secure-supply-chain-and-web-baseline.md <<'EOF'
+          # ADR-0029: Treat supply-chain and web security as release gates
+
+          Status: Accepted
+
+          Dependencies and Actions are pinned, reviewed, scanned, and represented in release evidence. The web application implements tenant-safe authorization, CSRF and CORS controls, CSP, secure cookies, upload isolation, SSRF defenses, cache partitioning, webhook verification, and administrative step-up controls.
+
+          Security tests are required evidence, not advisory reports.
+          EOF
+
+          cat > docs/02-architecture/adr/0030-capacity-keys-and-configuration-integrity.md <<'EOF'
+          # ADR-0030: Make capacity, cryptographic keys, and configuration explicit domains
+
+          Status: Accepted
+
+          Research uses service classes, budgets, admission control, backpressure, and graceful degradation to protect interactive work from background workloads. Secrets and encryption keys have owners, versions, rotation, revocation, and audit trails. Configuration is typed, validated, environment-scoped, and fail-closed.
+          EOF
+
+      - name: Write machine-readable implementation control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/_meta scripts
+
+          cat > docs/_meta/document-governance.json <<'EOF'
+          {
+            "version": 1,
+            "authorityOrder": [
+              "security-and-invariants",
+              "accepted-adrs",
+              "canonical-requirements-and-terminology",
+              "domain-contracts",
+              "delivery-blueprints",
+              "tooling-and-competitive-research",
+              "overview-navigation"
+            ],
+            "runtimeTruthRule": "A specified capability is not implemented without completion evidence in the implementation ledger.",
+            "changeRules": {
+              "architecture": "accepted ADR or governing-contract update",
+              "requirement": "stable ID, one owner slice, acceptance criteria",
+              "timeSensitiveClaim": "official reference and review date",
+              "release": "immutable artifact and recorded gate evidence"
+            }
+          }
+          EOF
+
+          cat > docs/_meta/implementation-status.json <<'EOF'
+          {
+            "version": 1,
+            "repositoryState": "implementation-ready-specification",
+            "runtimeState": "not-scaffolded",
+            "completedSlices": [],
+            "inProgressSlices": [],
+            "blockedSlices": [],
+            "nextSlice": "foundation-01",
+            "lastVerifiedAt": "2026-07-17T00:00:00Z",
+            "completionRecords": []
+          }
+          EOF
+
+          cat > docs/_meta/implementation-build-plan.json <<'EOF'
+          {
+            "version": 1,
+            "slices": [
+              {"id":"foundation-01","order":1,"title":"Monorepo and quality foundation","status":"planned","dependencies":[],"requirementPrefixes":["FOUND"],"documents":["ARCHITECTURE.md","docs/06-delivery/implementation-plan.md"],"deliverable":"Pinned pnpm/Turborepo workspace, strict TypeScript, TanStack Start and Hono boundaries, tests, linting, and CI."},
+              {"id":"shell-02","order":2,"title":"Application shell and design system","status":"planned","dependencies":["foundation-01"],"requirementPrefixes":["UI"],"documents":["docs/01-product/project-workspace.md","docs/01-product/chat.md"],"deliverable":"Accessible responsive Project shell using Tailwind, shadcn/ui, and AI Elements."},
+              {"id":"identity-03","order":3,"title":"Identity and authorization foundation","status":"planned","dependencies":["foundation-01"],"requirementPrefixes":["AUTH"],"documents":["docs/05-security/threat-model.md"],"deliverable":"Organizations, memberships, sessions, roles, Project authorization, and negative authorization tests."},
+              {"id":"projects-04","order":4,"title":"Project lifecycle","status":"planned","dependencies":["shell-02","identity-03"],"requirementPrefixes":["PROJ"],"documents":["docs/01-product/project-workspace.md"],"deliverable":"Create, list, open, update, archive, export, and restore Projects."},
+              {"id":"source-storage-05","order":5,"title":"Immutable source storage","status":"planned","dependencies":["projects-04"],"requirementPrefixes":["SRC"],"documents":["docs/01-product/sources.md","docs/04-sources/ingestion-pipeline.md"],"deliverable":"Uploads, originals, Source records, immutable SourceVersions, permissions, and audit events."},
+              {"id":"parsing-06","order":6,"title":"Parsing and media derivatives","status":"planned","dependencies":["source-storage-05"],"requirementPrefixes":["ING"],"documents":["docs/04-sources/ingestion-pipeline.md"],"deliverable":"Isolated parser routing, normalized elements, exact locators, OCR/transcription derivatives, and parser provenance."},
+              {"id":"indexing-07","order":7,"title":"Hybrid indexes","status":"planned","dependencies":["parsing-06"],"requirementPrefixes":["IDX"],"documents":["docs/04-sources/indexing-and-retrieval.md"],"deliverable":"Metadata, lexical, vector, entity, and code indexes with resumable rebuilds."},
+              {"id":"retrieval-08","order":8,"title":"Authorized retrieval","status":"planned","dependencies":["indexing-07","identity-03"],"requirementPrefixes":["RET"],"documents":["docs/04-sources/indexing-and-retrieval.md","docs/05-security/threat-model.md"],"deliverable":"Permission-first hybrid retrieval, fusion, reranking, context packs, and exact evidence selection."},
+              {"id":"chat-09","order":9,"title":"Persistent grounded Chat","status":"planned","dependencies":["shell-02","retrieval-08"],"requirementPrefixes":["CHAT"],"documents":["docs/01-product/chat.md"],"deliverable":"Persistent resumable streaming messages, attachments, citations, tool events, model Auto routing, and source scope."},
+              {"id":"evidence-10","order":10,"title":"Claims, evidence, and citations","status":"planned","dependencies":["retrieval-08"],"requirementPrefixes":["EVID"],"documents":["docs/03-ai/claims-evidence-citations.md"],"deliverable":"Atomic Claims, typed ClaimEvidence relationships, contradiction state, citation validation, and stale support detection."},
+              {"id":"documents-11","order":11,"title":"Canonical Markdown documents","status":"planned","dependencies":["chat-09","evidence-10"],"requirementPrefixes":["DOC"],"documents":["docs/01-product/documents-and-canvas.md","docs/02-architecture/canonical-content-and-no-drift.md"],"deliverable":"Document tree, deterministic Markdown, block provenance, canvas/source modes, typed patches, revisions, and diffs."},
+              {"id":"research-runs-12","order":12,"title":"Durable research runs","status":"planned","dependencies":["chat-09","evidence-10"],"requirementPrefixes":["RES"],"documents":["docs/03-ai/research-orchestrator.md"],"deliverable":"Research contracts, plans, durable steps, budgets, progress, interruption, approvals, and addressable results."},
+              {"id":"research-engines-13","order":13,"title":"Research engine adapters","status":"planned","dependencies":["research-runs-12"],"requirementPrefixes":["ENG"],"documents":["docs/03-ai/research-orchestrator.md"],"deliverable":"Provider-neutral managed and native research-engine ports with normalized events and evidence."},
+              {"id":"agents-14","order":14,"title":"Bounded multi-agent orchestration","status":"planned","dependencies":["research-engines-13"],"requirementPrefixes":["AGENT"],"documents":["docs/03-ai/multi-agent-orchestration.md"],"deliverable":"Typed worker packets, allowlists, budgets, fan-out/fan-in, skeptic stages, and deterministic outer workflow."},
+              {"id":"studio-15","order":15,"title":"Studio artifacts and canvases","status":"planned","dependencies":["documents-11","evidence-10"],"requirementPrefixes":["STUDIO"],"documents":["docs/01-product/research-studio.md"],"deliverable":"Typed evidence-backed tables, charts, maps, boards, slides, media, study artifacts, and exports."},
+              {"id":"github-read-16","order":16,"title":"GitHub synchronization and indexing","status":"planned","dependencies":["indexing-07","projects-04"],"requirementPrefixes":["GH"],"documents":["docs/04-sources/github-integration.md"],"deliverable":"GitHub App installation, commit-pinned snapshots, webhooks, trees, symbols, references, dependencies, and repository retrieval."},
+              {"id":"github-write-17","order":17,"title":"Guarded repository contributions","status":"planned","dependencies":["github-read-16","agents-14"],"requirementPrefixes":["GH"],"documents":["docs/04-sources/github-integration.md"],"deliverable":"Edit contracts, isolated patching, validation, approval, branches, commits, and draft pull requests without default-branch writes."},
+              {"id":"publishing-18","order":18,"title":"Public and private publishing","status":"planned","dependencies":["documents-11","evidence-10"],"requirementPrefixes":["PUB"],"documents":["docs/01-product/public-private-publishing.md"],"deliverable":"Deterministic projections, privacy and rights checks, immutable snapshots, withdrawal, and export."},
+              {"id":"memory-19","order":19,"title":"Inspectable Project memory","status":"planned","dependencies":["evidence-10","projects-04"],"requirementPrefixes":["MEM"],"documents":["docs/03-ai/project-memory.md"],"deliverable":"Versioned policy, preference, knowledge, decision, active-state, summary, and retrieval-adaptation memory with provenance."},
+              {"id":"maintenance-20","order":20,"title":"Continuous no-drift maintenance","status":"planned","dependencies":["publishing-18","memory-19"],"requirementPrefixes":["MAINT"],"documents":["docs/02-architecture/canonical-content-and-no-drift.md"],"deliverable":"Source change detection, evidence remapping, claim revalidation, dependency traversal, minimal patches, and feature-removal propagation."},
+              {"id":"connectors-21","order":21,"title":"Connector platform","status":"planned","dependencies":["source-storage-05","identity-03"],"requirementPrefixes":["CONN"],"documents":["docs/01-product/sources.md"],"deliverable":"OAuth/API/MCP connector ports, incremental sync, permission revocation, Google Workspace, and extensible adapters."},
+              {"id":"platform-api-22","order":22,"title":"Developer platform API","status":"planned","dependencies":["research-runs-12","documents-11","connectors-21"],"requirementPrefixes":["API"],"documents":["docs/02-architecture/developer-platform-api.md"],"deliverable":"Versioned Hono API, idempotency, async Operations, SSE replay, webhooks, OpenAPI, TypeScript/Python SDKs, CLI, and MCP."},
+              {"id":"commercial-23","order":23,"title":"Entitlements, metering, and billing","status":"planned","dependencies":["platform-api-22"],"requirementPrefixes":["COMM"],"documents":["docs/06-delivery/production-readiness-control-plane.md"],"deliverable":"Application-owned entitlements, reservations, usage ledger, quotas, settlement, corrections, and customer usage views."},
+              {"id":"operations-24","order":24,"title":"Analytics, notifications, and support operations","status":"planned","dependencies":["platform-api-22"],"requirementPrefixes":["OPS"],"documents":["docs/06-delivery/production-readiness-control-plane.md"],"deliverable":"Privacy-safe product events, flags, feedback, notifications, schedules, support cases, audit-safe diagnostics, and incident communication."},
+              {"id":"governance-25","order":25,"title":"Enterprise governance and rights","status":"planned","dependencies":["connectors-21","publishing-18"],"requirementPrefixes":["GOV"],"documents":["docs/05-security/data-governance.md"],"deliverable":"SSO/SCIM, retention, deletion, residency, provider profiles, source rights, takedown, and administrative policy."},
+              {"id":"conformance-26","order":26,"title":"End-to-end product conformance","status":"planned","dependencies":["agents-14","studio-15","github-write-17","maintenance-20","commercial-23","operations-24","governance-25"],"requirementPrefixes":["QA"],"documents":["docs/06-delivery/production-readiness-control-plane.md"],"deliverable":"Representative researcher, developer, 60-page-class, citation, public/private, restore, and accessibility conformance suites."},
+              {"id":"evolution-27","order":27,"title":"Schema and contract evolution","status":"planned","dependencies":["conformance-26"],"requirementPrefixes":["EVO"],"documents":["docs/02-architecture/schema-contract-and-data-evolution.md"],"deliverable":"Expand/backfill/switch/contract migrations, durable-workflow compatibility, API/event/index/export versioning, and recovery evidence."},
+              {"id":"performance-28","order":28,"title":"Performance and capacity qualification","status":"planned","dependencies":["evolution-27"],"requirementPrefixes":["PERF"],"documents":["docs/06-delivery/performance-capacity-and-load-engineering.md"],"deliverable":"SLOs, service classes, admission control, fairness, load tests, degradation drills, and capacity headroom evidence."},
+              {"id":"security-hardening-29","order":29,"title":"Production security hardening","status":"planned","dependencies":["evolution-27","performance-28"],"requirementPrefixes":["SSC","KEY","APPSEC"],"documents":["docs/05-security/secure-software-supply-chain.md","docs/05-security/secrets-encryption-and-configuration.md","docs/05-security/web-application-security-baseline.md","docs/05-security/threat-model.md"],"deliverable":"Supply-chain provenance, secret/key drills, tenant isolation, web security, prompt-injection, abuse, and privileged-action evidence."},
+              {"id":"release-30","order":30,"title":"Production release and stability gate","status":"planned","dependencies":["evolution-27","performance-28","security-hardening-29"],"requirementPrefixes":["REL"],"documents":["docs/06-delivery/release-engineering-and-change-control.md","docs/06-delivery/production-readiness-control-plane.md"],"deliverable":"Build-once promotion, canary, rollback, restore, ownership, runbooks, support readiness, and signed release evidence."}
+            ]
+          }
+          EOF
+
+          cat > docs/_meta/requirements.json <<'EOF'
+          {
+            "version": 1,
+            "requirements": [
+              {"id":"FOUND-001","ownerSlice":"foundation-01","statement":"The repository has a pinned reproducible monorepo and strict quality baseline.","acceptance":"Clean install, typecheck, lint, unit test, architecture test, and documentation gate pass in CI."},
+              {"id":"FOUND-002","ownerSlice":"foundation-01","statement":"TanStack Start and Hono have explicit deployable and package boundaries.","acceptance":"Boundary tests reject forbidden imports and one preview deployment boots."},
+              {"id":"UI-001","ownerSlice":"shell-02","statement":"The Project shell exposes Chat, Documents, and Sources as the primary surfaces.","acceptance":"Desktop and narrow layouts pass keyboard and accessibility tests."},
+              {"id":"UI-002","ownerSlice":"shell-02","statement":"AI streaming, tools, citations, attachments, and status use source-owned accessible components.","acceptance":"All interaction states have deterministic visual and screen-reader behavior."},
+              {"id":"AUTH-001","ownerSlice":"identity-03","statement":"Every tenant and Project operation is authorized server-side.","acceptance":"Cross-tenant and role-escalation negative tests pass."},
+              {"id":"AUTH-002","ownerSlice":"identity-03","statement":"Sessions, service accounts, and elevated operations use revocable least privilege.","acceptance":"Revocation and step-up tests pass without relying on stale client claims."},
+              {"id":"PROJ-001","ownerSlice":"projects-04","statement":"Project is the boundary for chat, sources, documents, memory, research, GitHub, and publishing.","acceptance":"All created domain records resolve to one authorized Project."},
+              {"id":"PROJ-002","ownerSlice":"projects-04","statement":"Projects can be exported and restored without losing provenance.","acceptance":"Round-trip fixture preserves IDs or stable mappings, revisions, and evidence links."},
+              {"id":"SRC-001","ownerSlice":"source-storage-05","statement":"Originals and SourceVersions are immutable and content-addressed.","acceptance":"Mutation is rejected and deduplication never crosses authorization boundaries."},
+              {"id":"SRC-002","ownerSlice":"source-storage-05","statement":"Source lifecycle decisions are reversible and audited.","acceptance":"Pin, exclude, archive, quarantine, replace, and revoke produce attributable events."},
+              {"id":"ING-001","ownerSlice":"parsing-06","statement":"Parsers run in isolated bounded environments and preserve exact locators.","acceptance":"Malicious and malformed fixtures cannot escape limits or lose source coordinates."},
+              {"id":"ING-002","ownerSlice":"parsing-06","statement":"Every derivative records parser identity, version, configuration, checksum, and confidence.","acceptance":"Reprocessing can be reproduced or explicitly identified as changed."},
+              {"id":"IDX-001","ownerSlice":"indexing-07","statement":"Indexes support lexical, semantic, metadata, entity, and code retrieval.","acceptance":"Benchmark fixtures meet declared recall and latency thresholds."},
+              {"id":"IDX-002","ownerSlice":"indexing-07","statement":"Index builds are resumable, versioned, and safely replaceable.","acceptance":"Interrupted rebuild resumes and cutover can roll back."},
+              {"id":"RET-001","ownerSlice":"retrieval-08","statement":"Authorization filtering occurs before candidate content reaches models or rerankers.","acceptance":"Forbidden evidence never appears in traces, caches, or model inputs."},
+              {"id":"RET-002","ownerSlice":"retrieval-08","statement":"Answers use exact evidence spans rather than untraceable chunk summaries.","acceptance":"Every citation resolves to an immutable locator and supporting text."},
+              {"id":"CHAT-001","ownerSlice":"chat-09","statement":"Messages and tool events persist before or during streaming and survive reconnects.","acceptance":"Refresh, disconnect, retry, and duplicate-submit tests preserve one coherent history."},
+              {"id":"CHAT-002","ownerSlice":"chat-09","statement":"Users can inspect and change the active source scope and model policy.","acceptance":"Scope and Auto/model decisions are visible, authorized, and recorded."},
+              {"id":"EVID-001","ownerSlice":"evidence-10","statement":"Factual assertions are represented as Claims linked to typed evidence relationships.","acceptance":"Support, corroboration, contradiction, inference, and unsupported states are queryable."},
+              {"id":"EVID-002","ownerSlice":"evidence-10","statement":"Citation entailment and source independence are verified before publication.","acceptance":"Known unsupported and circular-citation fixtures are blocked."},
+              {"id":"DOC-001","ownerSlice":"documents-11","statement":"Canonical document state serializes deterministically to Markdown.","acceptance":"Canvas and source-mode round trips produce stable output and block IDs."},
+              {"id":"DOC-002","ownerSlice":"documents-11","statement":"Agents modify documents only through reviewable typed patches.","acceptance":"Locked blocks, stale bases, and conflicting edits cannot be silently overwritten."},
+              {"id":"RES-001","ownerSlice":"research-runs-12","statement":"Deep research executes as durable addressable stages with budgets and progress.","acceptance":"Runs survive deployment, retry idempotently, pause for approval, and resume."},
+              {"id":"RES-002","ownerSlice":"research-runs-12","statement":"Long-form output is outlined, section-contracted, globally integrated, and audited.","acceptance":"A 40,000–60,000-word fixture remains coherent, editable, cited, and selectively regenerable."},
+              {"id":"ENG-001","ownerSlice":"research-engines-13","statement":"Managed and open research engines implement one normalized adapter contract.","acceptance":"Provider events become internal steps, sources, evidence, claims, usage, and errors."},
+              {"id":"ENG-002","ownerSlice":"research-engines-13","statement":"External engines cannot directly mutate canonical Project state.","acceptance":"All output passes ingestion, authorization, evidence, and patch boundaries."},
+              {"id":"AGENT-001","ownerSlice":"agents-14","statement":"Workers receive immutable typed task packets, allowlists, and budgets.","acceptance":"Workers cannot exceed granted sources, tools, spend, time, or write authority."},
+              {"id":"AGENT-002","ownerSlice":"agents-14","statement":"The outer workflow remains deterministic despite bounded agentic stages.","acceptance":"Fan-out, cancellation, retry, integration, and failure states are reproducible."},
+              {"id":"STUDIO-001","ownerSlice":"studio-15","statement":"Artifacts are typed editable projections backed by claims and evidence.","acceptance":"Tables, charts, graphs, boards, and presentations retain provenance after edits."},
+              {"id":"STUDIO-002","ownerSlice":"studio-15","statement":"Exports are deterministic, accessible, and reproducible from an artifact version.","acceptance":"PDF, DOCX, Markdown, and presentation fixtures reopen with expected structure."},
+              {"id":"GH-001","ownerSlice":"github-read-16","statement":"Repository evidence is pinned to installation, repository, commit SHA, path, and locator.","acceptance":"Webhook sync and historical citation tests resolve exact code versions."},
+              {"id":"GH-002","ownerSlice":"github-write-17","statement":"Repository writes require a base SHA, isolated validation, user approval, and draft PR.","acceptance":"The agent cannot push or merge the default branch or bypass required checks."},
+              {"id":"PUB-001","ownerSlice":"publishing-18","statement":"Public and private views derive from one canonical revision and evidence graph.","acceptance":"Projection tests prove that independent drift is impossible."},
+              {"id":"PUB-002","ownerSlice":"publishing-18","statement":"Publication is immutable, attributable, reviewable, and withdrawable.","acceptance":"Privacy, rights, citation, unsupported-claim, snapshot, and withdrawal tests pass."},
+              {"id":"MEM-001","ownerSlice":"memory-19","statement":"Memory is inspectable, versioned, attributable, sensitive-data aware, and forgettable.","acceptance":"Users can explain, edit, supersede, archive, and delete every memory item."},
+              {"id":"MEM-002","ownerSlice":"memory-19","statement":"Memory guides behavior but cannot substitute for evidence.","acceptance":"Evidence-required answers never cite or corroborate from memory alone."},
+              {"id":"MAINT-001","ownerSlice":"maintenance-20","statement":"Source changes revalidate dependent evidence, claims, documents, memory, and publications.","acceptance":"Changed and removed feature fixtures produce minimal correct patches."},
+              {"id":"MAINT-002","ownerSlice":"maintenance-20","statement":"Historical revisions and publication snapshots remain immutable during maintenance.","acceptance":"Revalidation creates new state without rewriting historical evidence."},
+              {"id":"CONN-001","ownerSlice":"connectors-21","statement":"Connectors use least-privilege authorization, incremental sync, and revocation.","acceptance":"Scope reduction and disconnect remove future access and invalidate dependent retrieval."},
+              {"id":"CONN-002","ownerSlice":"connectors-21","statement":"Read and action capabilities are separated for every connector.","acceptance":"A read connection cannot send, publish, modify, or delete external data."},
+              {"id":"API-001","ownerSlice":"platform-api-22","statement":"The public API exposes addressable asynchronous Operations with replayable progress.","acceptance":"Idempotency, polling, SSE resume, cancellation, webhooks, and partial results pass contract tests."},
+              {"id":"API-002","ownerSlice":"platform-api-22","statement":"OpenAPI, SDKs, CLI, MCP, and browser clients share the same domain services.","acceptance":"Generated clients pass versioned compatibility and authorization suites."},
+              {"id":"COMM-001","ownerSlice":"commercial-23","statement":"Entitlement, quota, usage, and billing truth remains application-owned.","acceptance":"Reservation, settlement, correction, credit, and reconciliation fixtures balance."},
+              {"id":"COMM-002","ownerSlice":"commercial-23","statement":"Users see current limits, estimates, posted usage, and billing state.","acceptance":"Customer views reconcile to the immutable usage ledger."},
+              {"id":"OPS-001","ownerSlice":"operations-24","statement":"Analytics and support systems never become shadow stores of private content.","acceptance":"Allowlist and redaction tests block prompts, source text, documents, credentials, and raw model output."},
+              {"id":"OPS-002","ownerSlice":"operations-24","statement":"Notifications and scheduled work are durable, preference-aware, and deduplicated.","acceptance":"Retry, digest, quiet-hour, cancellation, and authorization-change tests pass."},
+              {"id":"GOV-001","ownerSlice":"governance-25","statement":"Retention, deletion, residency, provider use, source rights, and takedown are enforceable policies.","acceptance":"Policy fixtures block disallowed processing and remove all required derivatives."},
+              {"id":"GOV-002","ownerSlice":"governance-25","statement":"Enterprise identity deprovisioning removes access promptly without erasing required audit evidence.","acceptance":"SSO, SCIM, role mapping, domain policy, and deprovisioning tests pass."},
+              {"id":"QA-001","ownerSlice":"conformance-26","statement":"Representative end-to-end researcher and developer journeys pass from a clean environment.","acceptance":"Grounded chat, document patching, research, export, GitHub, publication, restore, and API journeys pass."},
+              {"id":"QA-002","ownerSlice":"conformance-26","statement":"Accessibility, localization, failure, recovery, and long-form quality are release-tested.","acceptance":"WCAG-oriented, locale, degraded-provider, restore, and 60-page-class suites pass."},
+              {"id":"EVO-001","ownerSlice":"evolution-27","statement":"Persistent changes use expand, backfill, verify, switch, observe, and contract stages.","acceptance":"Mixed-version and rollback tests pass with in-flight workflows."},
+              {"id":"EVO-002","ownerSlice":"evolution-27","statement":"APIs, events, indexes, exports, and SDKs have explicit compatibility and deprecation policies.","acceptance":"Old and new supported consumers pass contract fixtures during the window."},
+              {"id":"PERF-001","ownerSlice":"performance-28","statement":"Interactive, background, ingestion, export, and maintenance workloads have declared SLOs and budgets.","acceptance":"Representative percentile and queue-age objectives pass under forecast load."},
+              {"id":"PERF-002","ownerSlice":"performance-28","statement":"Admission control, fairness, backpressure, and degradation protect critical work.","acceptance":"Overload tests preserve tenant isolation and interactive availability."},
+              {"id":"SSC-001","ownerSlice":"security-hardening-29","statement":"Release artifacts include pinned dependencies, SBOM, provenance, vulnerability, and license evidence.","acceptance":"Unpinned, unreviewed, vulnerable, or policy-incompatible artifacts are blocked."},
+              {"id":"KEY-001","ownerSlice":"security-hardening-29","statement":"Secrets and encryption keys are versioned, scoped, rotatable, revocable, and audited.","acceptance":"Rotation and compromise drills complete without plaintext leakage or unrecoverable data."},
+              {"id":"APPSEC-001","ownerSlice":"security-hardening-29","statement":"The application enforces web, upload, webhook, SSRF, cache, and privileged-action security baselines.","acceptance":"ASVS-oriented and adversarial tenant tests pass."},
+              {"id":"REL-001","ownerSlice":"release-30","statement":"Production promotes one verified artifact through staged rollout with rollback evidence.","acceptance":"Canary, stop, rollback, and forward-recovery drills are recorded."},
+              {"id":"REL-002","ownerSlice":"release-30","statement":"Launch requires operational ownership, runbooks, support, restore, and customer communication readiness.","acceptance":"The production-readiness evidence graph has no unapproved blocking gaps."}
+            ]
+          }
+          EOF
+
+          cat > docs/_meta/agent-routing.json <<'EOF'
+          {
+            "version": 1,
+            "alwaysRead": ["AGENTS.md","docs/START-HERE.md","SECURITY.md","docs/06-delivery/implementation-status.md"],
+            "prefixRoutes": {
+              "FOUND":["ARCHITECTURE.md","docs/06-delivery/implementation-plan.md"],
+              "UI":["docs/01-product/project-workspace.md","docs/01-product/chat.md","docs/01-product/documents-and-canvas.md"],
+              "AUTH":["docs/05-security/threat-model.md","docs/05-security/web-application-security-baseline.md"],
+              "PROJ":["docs/01-product/project-workspace.md"],
+              "SRC":["docs/01-product/sources.md","docs/04-sources/ingestion-pipeline.md"],
+              "ING":["docs/04-sources/ingestion-pipeline.md"],
+              "IDX":["docs/04-sources/indexing-and-retrieval.md"],
+              "RET":["docs/04-sources/indexing-and-retrieval.md","docs/03-ai/claims-evidence-citations.md"],
+              "CHAT":["docs/01-product/chat.md"],
+              "EVID":["docs/03-ai/claims-evidence-citations.md"],
+              "DOC":["docs/01-product/documents-and-canvas.md","docs/02-architecture/canonical-content-and-no-drift.md"],
+              "RES":["docs/03-ai/research-orchestrator.md"],
+              "ENG":["docs/03-ai/research-orchestrator.md"],
+              "AGENT":["docs/03-ai/multi-agent-orchestration.md"],
+              "STUDIO":["docs/01-product/research-studio.md"],
+              "GH":["docs/04-sources/github-integration.md"],
+              "PUB":["docs/01-product/public-private-publishing.md"],
+              "MEM":["docs/03-ai/project-memory.md"],
+              "MAINT":["docs/02-architecture/canonical-content-and-no-drift.md"],
+              "CONN":["docs/01-product/sources.md","docs/05-security/data-governance.md"],
+              "API":["docs/02-architecture/developer-platform-api.md"],
+              "COMM":["docs/06-delivery/production-readiness-control-plane.md"],
+              "OPS":["docs/06-delivery/production-readiness-control-plane.md"],
+              "GOV":["docs/05-security/data-governance.md"],
+              "QA":["docs/06-delivery/production-readiness-control-plane.md"],
+              "EVO":["docs/02-architecture/schema-contract-and-data-evolution.md"],
+              "PERF":["docs/06-delivery/performance-capacity-and-load-engineering.md"],
+              "SSC":["docs/05-security/secure-software-supply-chain.md"],
+              "KEY":["docs/05-security/secrets-encryption-and-configuration.md"],
+              "APPSEC":["docs/05-security/web-application-security-baseline.md","docs/05-security/threat-model.md"],
+              "REL":["docs/06-delivery/release-engineering-and-change-control.md","docs/06-delivery/production-readiness-control-plane.md"]
+            }
+          }
+          EOF
+
+          cat > docs/_meta/product-readiness-gaps.json <<'EOF'
+          {
+            "version": 1,
+            "gaps": [
+              {"id":"PR-01","title":"End-to-end product conformance","blocking":true,"ownerSlice":"conformance-26","status":"open"},
+              {"id":"PR-02","title":"Schema and contract migration evidence","blocking":true,"ownerSlice":"evolution-27","status":"open"},
+              {"id":"PR-03","title":"Capacity, fairness, and degraded-mode evidence","blocking":true,"ownerSlice":"performance-28","status":"open"},
+              {"id":"PR-04","title":"Supply-chain provenance and policy","blocking":true,"ownerSlice":"security-hardening-29","status":"open"},
+              {"id":"PR-05","title":"Secret and key lifecycle drills","blocking":true,"ownerSlice":"security-hardening-29","status":"open"},
+              {"id":"PR-06","title":"Tenant, web, prompt-injection, and abuse security","blocking":true,"ownerSlice":"security-hardening-29","status":"open"},
+              {"id":"PR-07","title":"Build-once promotion and rollback","blocking":true,"ownerSlice":"release-30","status":"open"},
+              {"id":"PR-08","title":"Restore and business-continuity exercise","blocking":true,"ownerSlice":"release-30","status":"open"},
+              {"id":"PR-09","title":"Operational ownership and support readiness","blocking":true,"ownerSlice":"release-30","status":"open"},
+              {"id":"PR-10","title":"Launch evidence and customer communication","blocking":true,"ownerSlice":"release-30","status":"open"}
+            ]
+          }
+          EOF
+
+      - name: Write deterministic agent and validation scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > scripts/agent-status.mjs <<'EOF'
+          import fs from 'node:fs';
+          const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+          const plan = read('docs/_meta/implementation-build-plan.json');
+          const status = read('docs/_meta/implementation-status.json');
+          const byId = new Map(plan.slices.map(s => [s.id, s]));
+          const completed = new Set(status.completedSlices);
+          const eligible = plan.slices
+            .filter(s => !completed.has(s.id) && s.dependencies.every(d => completed.has(d)))
+            .sort((a,b) => a.order-b.order);
+          const next = eligible[0];
+          if (!next) throw new Error('No eligible slice exists. Check dependency and status state.');
+          if (status.nextSlice !== next.id) throw new Error(`Status nextSlice ${status.nextSlice} does not match eligible ${next.id}.`);
+          console.log(`Repository state: ${status.repositoryState}`);
+          console.log(`Runtime state: ${status.runtimeState}`);
+          console.log(`Completed slices: ${completed.size}/${plan.slices.length}`);
+          console.log(`Next slice: ${next.id} — ${next.title}`);
+          console.log(`Dependencies: ${next.dependencies.length ? next.dependencies.join(', ') : 'none'}`);
+          console.log(`Deliverable: ${next.deliverable}`);
+          EOF
+
+          cat > scripts/agent-context.mjs <<'EOF'
+          import fs from 'node:fs';
+          const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+          const plan = read('docs/_meta/implementation-build-plan.json');
+          const status = read('docs/_meta/implementation-status.json');
+          const requirements = read('docs/_meta/requirements.json').requirements;
+          const routing = read('docs/_meta/agent-routing.json');
+          const arg = process.argv.find(a => a.startsWith('--slice='));
+          const id = arg ? arg.slice(8) : status.nextSlice;
+          const slice = plan.slices.find(s => s.id === id);
+          if (!slice) throw new Error(`Unknown slice: ${id}`);
+          const completed = new Set(status.completedSlices);
+          const eligible = slice.dependencies.every(d => completed.has(d));
+          const owned = requirements.filter(r => r.ownerSlice === id);
+          const docs = new Set([...routing.alwaysRead, ...slice.documents]);
+          for (const prefix of slice.requirementPrefixes) for (const p of routing.prefixRoutes[prefix] ?? []) docs.add(p);
+          console.log(`# ${slice.id}: ${slice.title}`);
+          console.log(`Eligibility: ${eligible ? 'ready' : 'context-only; dependencies incomplete'}`);
+          console.log(`Dependencies: ${slice.dependencies.length ? slice.dependencies.join(', ') : 'none'}`);
+          console.log(`Deliverable: ${slice.deliverable}`);
+          console.log('\n## Required reading');
+          for (const p of docs) {
+            if (!fs.existsSync(p)) throw new Error(`Routed document does not exist: ${p}`);
+            console.log(`- ${p}`);
+          }
+          console.log('\n## Owned requirements');
+          for (const r of owned) console.log(`- ${r.id}: ${r.statement}\n  Acceptance: ${r.acceptance}`);
+          EOF
+
+          cat > scripts/validate-agent-control.mjs <<'EOF'
+          import fs from 'node:fs';
+          const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+          const plan = read('docs/_meta/implementation-build-plan.json');
+          const status = read('docs/_meta/implementation-status.json');
+          const requirements = read('docs/_meta/requirements.json').requirements;
+          const routing = read('docs/_meta/agent-routing.json');
+          const ids = new Set(); const orders = new Set(); const byId = new Map();
+          for (const s of plan.slices) {
+            if (ids.has(s.id)) throw new Error(`Duplicate slice ${s.id}`);
+            if (orders.has(s.order)) throw new Error(`Duplicate order ${s.order}`);
+            ids.add(s.id); orders.add(s.order); byId.set(s.id,s);
+          }
+          for (const s of plan.slices) for (const d of s.dependencies) if (!byId.has(d)) throw new Error(`${s.id} depends on unknown ${d}`);
+          const visiting = new Set(); const visited = new Set();
+          function visit(id) { if (visiting.has(id)) throw new Error(`Dependency cycle at ${id}`); if (visited.has(id)) return; visiting.add(id); for (const d of byId.get(id).dependencies) visit(d); visiting.delete(id); visited.add(id); }
+          for (const id of ids) visit(id);
+          const reqIds = new Set();
+          for (const r of requirements) {
+            if (reqIds.has(r.id)) throw new Error(`Duplicate requirement ${r.id}`);
+            if (!byId.has(r.ownerSlice)) throw new Error(`${r.id} has unknown owner ${r.ownerSlice}`);
+            const prefix = r.id.split('-')[0];
+            if (!routing.prefixRoutes[prefix]) throw new Error(`${r.id} has no routing prefix`);
+            reqIds.add(r.id);
+          }
+          for (const s of plan.slices) {
+            const owned = requirements.filter(r => r.ownerSlice === s.id);
+            if (!owned.length) throw new Error(`${s.id} owns no requirements`);
+            for (const p of s.documents) if (!fs.existsSync(p)) throw new Error(`${s.id} routes missing ${p}`);
+          }
+          for (const p of routing.alwaysRead) if (!fs.existsSync(p)) throw new Error(`Missing always-read ${p}`);
+          const completed = new Set(status.completedSlices);
+          for (const id of completed) if (!byId.has(id)) throw new Error(`Unknown completed slice ${id}`);
+          const eligible = plan.slices.filter(s => !completed.has(s.id) && s.dependencies.every(d => completed.has(d))).sort((a,b)=>a.order-b.order);
+          if (!eligible.length) throw new Error('No eligible next slice');
+          if (status.nextSlice !== eligible[0].id) throw new Error(`nextSlice must be ${eligible[0].id}`);
+          console.log(`Agent control valid: ${plan.slices.length} slices, ${requirements.length} requirements.`);
+          EOF
+
+          cat > scripts/validate-production-readiness.mjs <<'EOF'
+          import fs from 'node:fs';
+          const plan = JSON.parse(fs.readFileSync('docs/_meta/implementation-build-plan.json','utf8'));
+          const gaps = JSON.parse(fs.readFileSync('docs/_meta/product-readiness-gaps.json','utf8')).gaps;
+          const byId = new Map(plan.slices.map(s => [s.id,s]));
+          const release = byId.get('release-30');
+          if (!release) throw new Error('release-30 is missing');
+          const required = ['conformance-26','evolution-27','performance-28','security-hardening-29'];
+          const ancestors = new Set();
+          function walk(id) { for (const d of byId.get(id).dependencies) if (!ancestors.has(d)) { ancestors.add(d); walk(d); } }
+          walk(release.id);
+          for (const id of required) if (!ancestors.has(id)) throw new Error(`release-30 does not transitively depend on ${id}`);
+          for (const gap of gaps) {
+            if (!byId.has(gap.ownerSlice)) throw new Error(`Gap ${gap.id} has unknown owner`);
+            if (gap.blocking && !ancestors.has(gap.ownerSlice) && gap.ownerSlice !== release.id) throw new Error(`Blocking gap ${gap.id} is outside release dependency graph`);
+          }
+          if (gaps.filter(g => g.blocking).length < 8) throw new Error('Insufficient explicit launch blockers');
+          console.log(`Production readiness valid: ${gaps.length} gaps, ${gaps.filter(g=>g.blocking).length} blocking.`);
+          EOF
+
+          cat > scripts/validate-workflow-security.mjs <<'EOF'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const dir = '.github/workflows';
+          const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /\.ya?ml$/.test(f)) : [];
+          if (files.length !== 1 || files[0] !== 'docs.yml') throw new Error(`Expected only .github/workflows/docs.yml; found ${files.join(', ')}`);
+          const text = fs.readFileSync(path.join(dir, files[0]), 'utf8');
+          if (/pull_request_target\s*:/.test(text)) throw new Error('pull_request_target is prohibited');
+          const mutable = [...text.matchAll(/uses:\s*([^\s#]+)@([^\s#]+)/g)].filter(m => !m[1].startsWith('./') && !/^[0-9a-f]{40}$/.test(m[2]));
+          if (mutable.length) throw new Error(`Unpinned Actions: ${mutable.map(m=>m[0]).join(', ')}`);
+          if (!/permissions:\s*\n\s+contents:\s*read/.test(text)) throw new Error('Workflow must default to contents: read');
+          if (!/persist-credentials:\s*false/.test(text)) throw new Error('Checkout must disable persistent credentials');
+          console.log('Workflow security valid.');
+          EOF
+
+          cat > scripts/validate-links.mjs <<'EOF'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          function walk(dir) { return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e => e.name === '.git' ? [] : e.isDirectory() ? walk(path.join(dir,e.name)) : [path.join(dir,e.name)]); }
+          const files = walk('.').filter(f => f.endsWith('.md'));
+          const errors = [];
+          for (const file of files) {
+            const text = fs.readFileSync(file,'utf8');
+            for (const m of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+              let target = m[1].trim().split('#')[0];
+              if (!target || /^(https?:|mailto:|data:)/.test(target)) continue;
+              target = decodeURIComponent(target);
+              const resolved = path.resolve(path.dirname(file),target);
+              if (!fs.existsSync(resolved)) errors.push(`${file} -> ${m[1]}`);
+            }
+          }
+          if (errors.length) throw new Error(`Broken relative links:\n${errors.join('\n')}`);
+          console.log(`Relative links valid across ${files.length} Markdown files.`);
+          EOF
+
+          cat > scripts/validate-repository.mjs <<'EOF'
+          import fs from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          const required = ['README.md','AGENTS.md','PRODUCT.md','ARCHITECTURE.md','ROADMAP.md','SECURITY.md','docs/START-HERE.md','docs/README.md','docs/_meta/agent-routing.json','docs/_meta/implementation-build-plan.json','docs/_meta/implementation-status.json','docs/_meta/requirements.json','docs/_meta/product-readiness-gaps.json','scripts/agent-status.mjs','scripts/agent-context.mjs'];
+          for (const p of required) if (!fs.existsSync(p)) throw new Error(`Missing required file ${p}`);
+          for (const p of ['docs/_meta/agent-routing.json','docs/_meta/implementation-build-plan.json','docs/_meta/implementation-status.json','docs/_meta/requirements.json','docs/_meta/product-readiness-gaps.json','docs/_meta/document-governance.json']) JSON.parse(fs.readFileSync(p,'utf8'));
+          const scripts = ['scripts/validate-agent-control.mjs','scripts/validate-production-readiness.mjs','scripts/validate-workflow-security.mjs','scripts/validate-links.mjs','scripts/agent-status.mjs','scripts/agent-context.mjs'];
+          for (const script of scripts) {
+            const r = spawnSync(process.execPath,[script],{stdio:'inherit'});
+            if (r.status !== 0) process.exit(r.status ?? 1);
+          }
+          console.log('Repository control plane valid.');
+          EOF
+
+          cat > package.json <<'EOF'
+          {
+            "name": "research",
+            "private": true,
+            "version": "0.0.0",
+            "description": "Source-native research and living documentation platform",
+            "engines": {"node": ">=24"},
+            "scripts": {
+              "agent:status": "node scripts/agent-status.mjs",
+              "agent:context": "node scripts/agent-context.mjs",
+              "agent:check": "node scripts/validate-repository.mjs"
+            }
+          }
+          EOF
+
+      - name: Clean publication remnants and install canonical workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap .canonical-import-v6 .canonical-v6-final .canonical-v6-payload .canonical-v7 .research-import research-import .publication .v7-delta .v7-patch
+          rm -f MATERIALIZATION_DIAGNOSTIC.md PROJECT_STATUS.md DIRECT_PUBLICATION_STATUS.md TREE_API_TEST.txt TREE_TEST_2.md _tool_probe.txt _probe_should_not_create.txt _probe2.txt
+          rm -rf .github/workflows
+          mkdir -p .github/workflows
+          cat > .github/workflows/docs.yml <<'EOF'
+          name: Documentation contracts
+
+          on:
+            pull_request:
+            push:
+              branches: [main]
+
+          permissions:
+            contents: read
+
+          jobs:
+            validate:
+              runs-on: ubuntu-latest
+              timeout-minutes: 10
+              steps:
+                - name: Check out repository
+                  uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+                  with:
+                    persist-credentials: false
+                - name: Validate documentation and agent contracts
+                  run: npm run agent:check
+          EOF
+
+      - name: Validate final repository state
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run agent:check
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l | tr -d ' ')" = 1
+          test -f .github/workflows/docs.yml
+          ! find . -maxdepth 2 -type d \( -name '.bootstrap' -o -name '.canonical*' -o -name '.research-import' -o -name '.v7-*' \) | grep -q .
+
+      - name: Commit production-ready documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Research documentation publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: finalize production-ready Research control plane'
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin main
+
+      - name: Close trigger pull request
+        if: success()
+        shell: bash
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The production-ready documentation control plane was validated and committed directly to main.'
