@@ -36,9 +36,9 @@ jobs:
           archive=/tmp/research-production.patch.xz
           patch_file=/tmp/research-production.patch
 
-          find .production-docs-patch -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
+          find .production-docs-patch16 -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
           count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 42 ]] || { echo "Expected 42 patch parts, found $count" >&2; exit 1; }
+          [[ "$count" -eq 21 ]] || { echo "Expected 21 patch parts, found $count" >&2; exit 1; }
           while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
           base64 --decode "$encoded" > "$archive"
           expected='4bd79955cb3e6d549d9f1d286183aff4aecd7c84c3191d8c0fbe486288365309'
@@ -65,6 +65,7 @@ jobs:
           [[ -z "$unexpected" ]] || { echo 'Main changed outside the one-time workflow after the snapshot:' >&2; echo "$unexpected" >&2; exit 1; }
 
           git apply --index --3way --whitespace=nowarn "$patch_file"
+          rm -rf .production-docs-patch .production-docs-patch16
           rm -f .github/workflows/apply-production-docs.yml
           git add -A
 
