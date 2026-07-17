@@ -1,0 +1,178 @@
+name: Publish complete canonical Research V6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-canonical-v6-from-tunnel.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-complete-canonical-research-v6
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download and validate canonical archive
+        id: archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive=/tmp/Research-repository-v6.zip
+          source_root=/tmp/research-v6-source
+          diagnostics=/tmp/research-v6-download.log
+          : > "$diagnostics"
+
+          urls=(
+            "https://research-v6-byronwade.serveo.net/Research-repository-v6.zip"
+            "https://research-v6-byronwade.loca.lt/Research-repository-v6.zip"
+          )
+
+          downloaded=0
+          for url in "${urls[@]}"; do
+            echo "Trying $url" | tee -a "$diagnostics"
+            rm -f "$archive"
+            if curl --fail --location --silent --show-error \
+              --connect-timeout 20 --max-time 240 \
+              -H 'bypass-tunnel-reminder: true' \
+              "$url" -o "$archive" 2>>"$diagnostics"; then
+              if unzip -tq "$archive" >>"$diagnostics" 2>&1; then
+                downloaded=1
+                echo "Validated archive from $url" | tee -a "$diagnostics"
+                break
+              fi
+            fi
+          done
+
+          if [[ "$downloaded" -ne 1 ]]; then
+            echo 'Unable to download a valid canonical ZIP.' | tee -a "$diagnostics"
+            cat "$diagnostics"
+            exit 1
+          fi
+
+          rm -rf "$source_root"
+          mkdir -p "$source_root"
+          unzip -q "$archive" -d "$source_root"
+
+          mapfile -t roots < <(find "$source_root" -mindepth 1 -maxdepth 1 -print)
+          if [[ ${#roots[@]} -eq 1 && -d "${roots[0]}" ]]; then
+            source_root="${roots[0]}"
+          fi
+
+          required=(
+            README.md
+            AGENTS.md
+            docs/START-HERE.md
+            docs/README.md
+            docs/_meta/agent-routing.json
+            docs/_meta/implementation-build-plan.json
+            docs/_meta/requirements.json
+            scripts/agent-status.mjs
+            scripts/agent-context.mjs
+            package.json
+          )
+          for path in "${required[@]}"; do
+            [[ -f "$source_root/$path" ]] || {
+              echo "Missing canonical file: $path" >&2
+              exit 1
+            }
+          done
+
+          file_count="$(find "$source_root" -type f | wc -l | tr -d ' ')"
+          markdown_count="$(find "$source_root" -type f -name '*.md' | wc -l | tr -d ' ')"
+          echo "Canonical files: $file_count"
+          echo "Canonical Markdown files: $markdown_count"
+          [[ "$file_count" -ge 220 ]] || { echo "Partial source tree: $file_count files" >&2; exit 1; }
+          [[ "$markdown_count" -ge 130 ]] || { echo "Incomplete documentation corpus: $markdown_count Markdown files" >&2; exit 1; }
+
+          echo "source_root=$source_root" >> "$GITHUB_OUTPUT"
+          echo "file_count=$file_count" >> "$GITHUB_OUTPUT"
+          echo "markdown_count=$markdown_count" >> "$GITHUB_OUTPUT"
+
+      - name: Validate agent entry and documentation contracts
+        shell: bash
+        working-directory: ${{ steps.archive.outputs.source_root }}
+        run: |
+          set -euo pipefail
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs > /tmp/research-agent-context.txt
+          git diff --no-index --check /dev/null . || true
+
+          if command -v corepack >/dev/null 2>&1; then
+            corepack enable
+            if command -v pnpm >/dev/null 2>&1; then
+              pnpm agent:check
+            fi
+          fi
+
+      - name: Replace main with canonical source tree
+        shell: bash
+        env:
+          SOURCE_ROOT: ${{ steps.archive.outputs.source_root }}
+          FILE_COUNT: ${{ steps.archive.outputs.file_count }}
+          MARKDOWN_COUNT: ${{ steps.archive.outputs.markdown_count }}
+        run: |
+          set -euo pipefail
+
+          rsync -a --delete \
+            --exclude '.git/' \
+            "$SOURCE_ROOT/" "$GITHUB_WORKSPACE/"
+
+          mkdir -p docs/_meta
+          cat > docs/_meta/github-publication.json <<JSON
+          {
+            "schemaVersion": 1,
+            "repository": "${GITHUB_REPOSITORY}",
+            "branch": "main",
+            "canonicalSnapshot": "Research-repository-v6.zip",
+            "sourceCommit": "78ee7bad8e6c18d211b4613ca62198df5eb3dd1a",
+            "publishedAt": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "trackedFiles": ${FILE_COUNT},
+            "markdownFiles": ${MARKDOWN_COUNT},
+            "validation": {
+              "archiveIntegrity": "passed",
+              "requiredFiles": "passed",
+              "agentStatus": "passed",
+              "agentContext": "passed"
+            },
+            "temporaryImporterRemoved": true
+          }
+          JSON
+
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: publish complete canonical Research specification'
+          git push origin HEAD:main
+
+      - name: Record failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .bootstrap
+          {
+            echo '# Canonical publication failure'
+            echo
+            echo 'The one-shot publication workflow failed before replacing the repository.'
+            echo
+            echo '```text'
+            cat /tmp/research-v6-download.log 2>/dev/null || true
+            echo '```'
+          } > .bootstrap/canonical-publication-failure.md
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .bootstrap/canonical-publication-failure.md
+          git commit -m 'chore: record canonical publication failure' || true
+          git push origin HEAD:main || true
