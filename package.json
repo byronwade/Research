@@ -1,0 +1,17 @@
+{
+  "name": "research",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Source-native research and living documentation platform",
+  "packageManager": "pnpm@10.13.1",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "agent:status": "node scripts/agent-status.mjs",
+    "agent:context": "node scripts/agent-context.mjs",
+    "agent:check": "node scripts/validate-agent-control.mjs",
+    "docs:check": "node scripts/validate-agent-control.mjs",
+    "check": "pnpm agent:check"
+  }
+}
