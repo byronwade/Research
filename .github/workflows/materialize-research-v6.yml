@@ -1,0 +1,112 @@
+name: Materialize complete Research V6 repository
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: materialize-research-v6
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    if: github.event_name == 'workflow_dispatch' || github.event.issue.title == '[system] materialize Research V6'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out staged repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct, validate, and publish canonical tree
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          parts=/tmp/research-v6-parts.txt
+          encoded=/tmp/research-v6.tar.xz.b64
+          archive=/tmp/research-v6.tar.xz
+          source=/tmp/research-v6-source
+
+          find .bootstrap -maxdepth 1 -type f -name 'archive.part-*' -print | LC_ALL=C sort > "$parts"
+          part_count="$(wc -l < "$parts" | tr -d ' ')"
+          if [[ "$part_count" -lt 2 ]]; then
+            echo "Expected staged archive parts under .bootstrap; found $part_count" >&2
+            find . -maxdepth 3 -type f -not -path './.git/*' -printf '%12s %p\n' | sort -nr >&2
+            exit 1
+          fi
+
+          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+          base64 --decode "$encoded" > "$archive"
+          xz -t "$archive"
+
+          rm -rf "$source"
+          mkdir -p "$source"
+          tar -xJf "$archive" -C "$source"
+
+          mapfile -t roots < <(find "$source" -mindepth 1 -maxdepth 1 -print)
+          if [[ ${#roots[@]} -eq 1 && -d "${roots[0]}" ]]; then
+            source="${roots[0]}"
+          fi
+
+          required=(
+            README.md
+            AGENTS.md
+            PRODUCT.md
+            ARCHITECTURE.md
+            ROADMAP.md
+            SECURITY.md
+            docs/START-HERE.md
+            docs/README.md
+            docs/_meta/agent-routing.json
+            docs/_meta/build-plan.json
+            docs/_meta/requirements.json
+            docs/_meta/implementation-status.json
+            scripts/agent-status.mjs
+            scripts/agent-context.mjs
+            package.json
+          )
+
+          for path in "${required[@]}"; do
+            [[ -f "$source/$path" ]] || { echo "Missing canonical file: $path" >&2; exit 1; }
+          done
+
+          file_count="$(find "$source" -type f | wc -l | tr -d ' ')"
+          markdown_count="$(find "$source" -type f -name '*.md' | wc -l | tr -d ' ')"
+          [[ "$file_count" -eq 225 ]] || { echo "Expected 225 files, found $file_count" >&2; exit 1; }
+          [[ "$markdown_count" -eq 195 ]] || { echo "Expected 195 Markdown files, found $markdown_count" >&2; exit 1; }
+
+          cd "$source"
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs > /tmp/research-agent-context.txt
+          node scripts/validate-docs.mjs
+          node scripts/validate-tooling-catalog.mjs
+          node scripts/validate-notebooklm-catalog.mjs
+          node scripts/validate-agent-contract.mjs
+          node scripts/validate-doc-cohesion.mjs
+          node scripts/validate-product-readiness.mjs
+
+          rm -rf .git
+          git init -b main
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: publish complete Research V6 specification'
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin main:main
+
+      - name: Close trigger issue
+        if: success() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment 'Canonical Research V6 tree validated and published to main.'
