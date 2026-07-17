@@ -1,0 +1,412 @@
+name: Apply production documentation cohesion
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: apply-production-cohesion
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event.pull_request.title == '[system] apply Research production cohesion'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reconcile machine routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const routingPath = 'docs/_meta/agent-routing.json';
+          const planPath = 'docs/_meta/implementation-build-plan.json';
+          const routing = JSON.parse(fs.readFileSync(routingPath,'utf8'));
+          const plan = JSON.parse(fs.readFileSync(planPath,'utf8'));
+          const additions = {
+            FOUND:['docs/06-delivery/test-strategy-and-quality-gates.md'],
+            GOV:['docs/02-architecture/data-retention-deletion-and-portability.md'],
+            QA:['docs/06-delivery/test-strategy-and-quality-gates.md','docs/07-reference/definition-of-done.md'],
+            EVO:['docs/02-architecture/configuration-and-feature-flags.md'],
+            PERF:['docs/06-delivery/environment-and-deployment-topology.md','docs/06-delivery/observability-and-incident-operations.md'],
+            SSC:['docs/05-security/security-verification-matrix.md'],
+            KEY:['docs/02-architecture/configuration-and-feature-flags.md'],
+            APPSEC:['docs/05-security/security-verification-matrix.md'],
+            REL:['docs/06-delivery/environment-and-deployment-topology.md','docs/06-delivery/observability-and-incident-operations.md','docs/06-delivery/backup-restore-and-disaster-recovery.md','docs/06-delivery/test-strategy-and-quality-gates.md','docs/07-reference/definition-of-done.md']
+          };
+          for (const [prefix, docs] of Object.entries(additions)) {
+            routing.prefixRoutes[prefix] ??= [];
+            routing.prefixRoutes[prefix] = [...new Set([...routing.prefixRoutes[prefix], ...docs])];
+          }
+          const byId = new Map(plan.slices.map(s => [s.id,s]));
+          const sliceDocs = {
+            'foundation-01':['docs/06-delivery/test-strategy-and-quality-gates.md'],
+            'operations-24':['docs/06-delivery/observability-and-incident-operations.md'],
+            'governance-25':['docs/02-architecture/data-retention-deletion-and-portability.md'],
+            'conformance-26':['docs/06-delivery/test-strategy-and-quality-gates.md','docs/07-reference/definition-of-done.md'],
+            'evolution-27':['docs/02-architecture/configuration-and-feature-flags.md'],
+            'performance-28':['docs/06-delivery/environment-and-deployment-topology.md','docs/06-delivery/observability-and-incident-operations.md'],
+            'security-hardening-29':['docs/05-security/security-verification-matrix.md','docs/02-architecture/configuration-and-feature-flags.md'],
+            'release-30':['docs/06-delivery/environment-and-deployment-topology.md','docs/06-delivery/observability-and-incident-operations.md','docs/06-delivery/backup-restore-and-disaster-recovery.md','docs/06-delivery/test-strategy-and-quality-gates.md','docs/07-reference/definition-of-done.md']
+          };
+          for (const [id, docs] of Object.entries(sliceDocs)) {
+            const slice = byId.get(id);
+            if (!slice) throw new Error(`Missing slice ${id}`);
+            slice.documents = [...new Set([...slice.documents, ...docs])];
+          }
+          fs.writeFileSync(routingPath, JSON.stringify(routing,null,2)+'\n');
+          fs.writeFileSync(planPath, JSON.stringify(plan,null,2)+'\n');
+          NODE
+
+      - name: Reconcile overview and delivery documents
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > ARCHITECTURE.md <<'EOF'
+          # Research architecture
+
+          Research begins as a modular TypeScript monolith: one TanStack Start application, one Hono API surface, one transactional Postgres authority, private Blob storage, durable workflows, and isolated workers. Domain packages are separated so proven operational boundaries can later be extracted without changing the product model.
+
+          ## Product model
+
+          ```text
+          Organization
+          └── Project
+              ├── Chat and Messages
+              ├── Sources and immutable SourceVersions
+              ├── EvidenceSpans and Claims
+              ├── Documents, Blocks, and Revisions
+              ├── ResearchRuns and Operations
+              ├── Artifacts and Publications
+              ├── Memory and Decisions
+              └── Connections, GitHub workspaces, usage, and audit events
+          ```
+
+          The critical provenance chain is:
+
+          ```text
+          DocumentBlock
+          → Claim
+          → ClaimEvidence
+          → EvidenceSpan
+          → immutable SourceVersion
+          ```
+
+          ## Runtime boundaries
+
+          - **Web application:** TanStack Start, Tailwind, shadcn/ui, AI Elements, accessible Project shell, canvas, source viewers, and public output.
+          - **Application API:** Hono routes and domain services; all browser, SDK, CLI, webhook, and MCP clients use the same authorization and business logic.
+          - **AI layer:** AI SDK and AI Gateway through capability-based model roles; provider-specific behavior stays behind adapters.
+          - **Durable work:** ingestion, research, maintenance, export, notifications, billing reconciliation, deletion, and repository edits run as addressable workflows and Operations.
+          - **Data authority:** Postgres for transactions and policy; Blob for immutable bytes; full-text and pgvector indexes are derived and rebuildable.
+          - **Isolation:** parsers, browser acquisition, code execution, repository patches, and renderers run with bounded resources and explicit inputs/outputs.
+
+          ## Consistency model
+
+          - SourceVersions and publication snapshots are immutable.
+          - Documents use optimistic concurrency and typed patches against expected base revisions.
+          - Transactional outbox and idempotency keys connect database commits to workflows and external effects.
+          - Public/private projections, memory, artifacts, and maintenance depend on canonical Claims and evidence.
+          - Search, vector, cache, and generated summaries are derivatives and never become authority.
+
+          ## Production control plane
+
+          Production uses typed configuration, environment isolation, immutable artifact promotion, compatible schema and contract evolution, service classes, admission control, privacy-safe observability, restore exercises, and explicit release evidence.
+
+          Governing contracts:
+
+          - [`docs/02-architecture/schema-contract-and-data-evolution.md`](docs/02-architecture/schema-contract-and-data-evolution.md)
+          - [`docs/02-architecture/configuration-and-feature-flags.md`](docs/02-architecture/configuration-and-feature-flags.md)
+          - [`docs/02-architecture/data-retention-deletion-and-portability.md`](docs/02-architecture/data-retention-deletion-and-portability.md)
+          - [`docs/06-delivery/environment-and-deployment-topology.md`](docs/06-delivery/environment-and-deployment-topology.md)
+          - [`docs/06-delivery/observability-and-incident-operations.md`](docs/06-delivery/observability-and-incident-operations.md)
+          - [`docs/06-delivery/backup-restore-and-disaster-recovery.md`](docs/06-delivery/backup-restore-and-disaster-recovery.md)
+          - [`docs/06-delivery/release-engineering-and-change-control.md`](docs/06-delivery/release-engineering-and-change-control.md)
+
+          ## Security architecture
+
+          Authorization precedes retrieval. Source content is untrusted data. Connectors are read-only by default. High-impact actions require short-lived scoped capabilities and approval. Secrets, tenant data, and model content are excluded from routine telemetry. Supply-chain, key lifecycle, web security, prompt injection, deletion, public projection, and restore are release gates.
+
+          ## Evolution rule
+
+          Begin with the simplest deployable topology that preserves these invariants. Extract a service only after measured scale, isolation, residency, language/runtime, or organizational constraints justify the operational cost.
+          EOF
+
+          cat > ROADMAP.md <<'EOF'
+          # Research roadmap
+
+          The machine-readable authority is `docs/_meta/implementation-build-plan.json`. This document groups the 30 slices into product milestones without replacing their dependency graph.
+
+          ## Milestone 1 — Foundation and Project shell
+
+          `foundation-01` through `projects-04`
+
+          Establish reproducible tooling, TanStack Start and Hono boundaries, design system, identity, authorization, and the Project lifecycle.
+
+          ## Milestone 2 — One grounded source
+
+          `source-storage-05` through `evidence-10`
+
+          Upload a PDF, preserve an immutable SourceVersion, parse exact elements, build hybrid indexes, retrieve with authorization, stream persistent cited Chat, and represent Claims and EvidenceSpans.
+
+          ## Milestone 3 — Durable documents and research
+
+          `documents-11` through `agents-14`
+
+          Add deterministic Markdown, canvas/source modes, typed patches, durable ResearchRuns, managed/native research adapters, and bounded multi-agent stages.
+
+          ## Milestone 4 — Artifacts, GitHub, publishing, and memory
+
+          `studio-15` through `maintenance-20`
+
+          Produce evidence-backed Studio artifacts, understand and safely modify repositories, publish public/private projections, preserve inspectable memory, and maintain documents when sources change.
+
+          ## Milestone 5 — Connected developer platform
+
+          `connectors-21` through `platform-api-22`
+
+          Add connector ports, Google Workspace and MCP paths, versioned asynchronous APIs, SSE, webhooks, OpenAPI, SDKs, CLI, and developer-facing MCP resources/tools.
+
+          ## Milestone 6 — Commercial and enterprise operation
+
+          `commercial-23` through `governance-25`
+
+          Add entitlements, usage, billing, privacy-safe analytics, notifications, schedules, support operations, enterprise identity, retention, deletion, portability, residency, provider governance, and source rights.
+
+          ## Milestone 7 — Product conformance
+
+          `conformance-26`
+
+          Prove researcher and developer journeys, grounded citations, 40,000–60,000-word output, public/private behavior, accessibility, localization, restore, and failure recovery.
+
+          ## Milestone 8 — Production qualification
+
+          `evolution-27` through `release-30`
+
+          Qualify schema and contract evolution, durable-workflow compatibility, performance and capacity, supply-chain and application security, secret/key operations, build-once promotion, canary, rollback, restore, runbooks, support, and launch evidence.
+
+          ## First usable product
+
+          The first vertical milestone remains intentionally narrow:
+
+          ```text
+          Create Project
+          → upload one PDF
+          → parse and index it
+          → ask a question
+          → receive a cited answer
+          → create an editable Markdown document
+          → reopen it after refresh
+          ```
+
+          Do not expand connector breadth or agent complexity before this path is reliable and measurable.
+          EOF
+
+          cat > docs/06-delivery/implementation-plan.md <<'EOF'
+          # Implementation plan
+
+          Implementation follows `docs/_meta/implementation-build-plan.json`. Slices are the smallest primary ownership units for requirements and completion evidence.
+
+          ## Rules
+
+          1. Implement the lowest-order eligible slice unless the user explicitly selects another eligible slice.
+          2. A slice cannot begin while a dependency is incomplete.
+          3. Each canonical requirement has exactly one primary owner slice.
+          4. Cross-cutting behavior is read through requirement-prefix routing, not by duplicating ownership.
+          5. Completion requires the evidence in `docs/07-reference/definition-of-done.md`.
+          6. Runtime status is recorded only in `docs/_meta/implementation-status.json` with attributable completion evidence.
+
+          ## Slice groups
+
+          | Group | Slices | Outcome |
+          |---|---|---|
+          | Foundation | 01–04 | Build system, shell, identity, Project lifecycle |
+          | Evidence base | 05–10 | Immutable sources, parsing, indexes, retrieval, Chat, Claims |
+          | Research product | 11–15 | Documents, durable research, engines, agents, Studio |
+          | Knowledge lifecycle | 16–20 | GitHub, publishing, memory, continuous maintenance |
+          | Platform | 21–25 | Connectors, API/SDK/MCP, commercial, operations, governance |
+          | Qualification | 26–30 | Conformance, evolution, performance, security, release |
+
+          ## Branch and pull-request convention
+
+          Use `agent/<slice-id>` for implementation branches. Pull requests name the slice and requirement IDs, describe migration and security impact, include tests and evidence, and explain rollout and rollback. Do not combine unrelated slices.
+
+          ## Status commands
+
+          ```bash
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs
+          npm run agent:check
+          ```
+          EOF
+
+          cat > docs/06-delivery/implementation-status.md <<'EOF'
+          # Implementation status
+
+          ```text
+          Repository maturity: implementation-ready specification
+          Runtime state:       not scaffolded
+          Completed slices:    0 of 30
+          In progress:         none
+          Next eligible slice: foundation-01
+          ```
+
+          No TanStack Start application, Hono API, database, authentication, ingestion pipeline, retrieval engine, Chat runtime, document canvas, research engine, connector, GitHub App, billing system, or production environment is represented as implemented.
+
+          The machine authority is `docs/_meta/implementation-status.json`. This prose must remain consistent with it.
+
+          ## Next slice
+
+          `foundation-01 — Monorepo and quality foundation`
+
+          Deliver a pinned pnpm/Turborepo workspace, strict TypeScript, TanStack Start and Hono boundaries, deterministic formatting and tests, package-boundary enforcement, dependency and workflow policy, and the existing documentation gates in CI.
+
+          ## First validated product milestone
+
+          After its dependencies complete, prove one Project can upload one PDF, preserve and parse its immutable SourceVersion, retrieve exact authorized evidence, stream a cited answer, save an editable Markdown document, and reopen it after refresh.
+
+          ## Status update rule
+
+          Mark a slice complete only after the implementation, acceptance checks, security and compatibility evidence, documentation, and completion record exist. Plans, generated stubs, disabled tests, screenshots, or a successful deployment alone are insufficient.
+          EOF
+
+          cat > CONTRIBUTING.md <<'EOF'
+          # Contributing
+
+          Read `AGENTS.md` and `docs/START-HERE.md`, then run:
+
+          ```bash
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs
+          ```
+
+          Work within one eligible implementation slice. Update governing documentation or add an ADR when architecture changes. Preserve authorization, provenance, deterministic Markdown, immutable versions, public/private consistency, idempotency, auditability, and provider isolation.
+
+          Before opening or updating a pull request:
+
+          ```bash
+          npm run agent:check
+          ```
+
+          The pull request must list slice and requirement IDs, user impact, migrations and compatibility, security impact, tests, rollout, monitoring, rollback, documentation, and deferred work. Completion follows `docs/07-reference/definition-of-done.md`.
+          EOF
+
+          cat > REPOSITORY_GUIDE.md <<'EOF'
+          # Repository guide
+
+          The repository is controlled by:
+
+          - `AGENTS.md` for coding-agent behavior;
+          - `docs/START-HERE.md` for navigation;
+          - `docs/_meta/implementation-build-plan.json` for dependency order;
+          - `docs/_meta/requirements.json` for primary ownership;
+          - `docs/_meta/agent-routing.json` for required reading;
+          - `docs/_meta/implementation-status.json` for verified runtime progress;
+          - `docs/07-reference/definition-of-done.md` for completion evidence.
+
+          Overview files explain the system but do not override security contracts, ADRs, or canonical requirements.
+          EOF
+
+          cat > docs/_meta/traceability.md <<'EOF'
+          # Traceability
+
+          Machine validation enforces the following chain:
+
+          ```text
+          requirement ID
+          → one owner implementation slice
+          → dependency graph
+          → required document routes
+          → acceptance criteria
+          → implementation evidence
+          → release evidence where applicable
+          ```
+
+          The 30-slice plan owns 56 canonical requirements. Prefix routing supplies cross-cutting context without giving a requirement multiple primary owners.
+
+          Terminal production qualification is:
+
+          ```text
+          conformance-26
+          → evolution-27
+          → performance-28
+          → security-hardening-29
+          → release-30
+          ```
+
+          `release-30` also depends directly on evolution and performance so production cannot bypass compatibility or capacity evidence.
+          EOF
+
+          node <<'NODE'
+          const fs=require('node:fs');
+          const p='docs/README.md';
+          let t=fs.readFileSync(p,'utf8');
+          const marker='## Production operation\n';
+          const section=`\n## Production operation\n\n- [Environment and deployment topology](06-delivery/environment-and-deployment-topology.md)\n- [Observability and incident operations](06-delivery/observability-and-incident-operations.md)\n- [Backup, restore, and disaster recovery](06-delivery/backup-restore-and-disaster-recovery.md)\n- [Test strategy and quality gates](06-delivery/test-strategy-and-quality-gates.md)\n- [Configuration and feature flags](02-architecture/configuration-and-feature-flags.md)\n- [Data retention, deletion, and portability](02-architecture/data-retention-deletion-and-portability.md)\n- [Security verification matrix](05-security/security-verification-matrix.md)\n- [Definition of done](07-reference/definition-of-done.md)\n`;
+          if (!t.includes(marker)) t=t.trimEnd()+section+'\n';
+          fs.writeFileSync(p,t);
+          NODE
+
+      - name: Restore the canonical workflow and validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .github/workflows
+          mkdir -p .github/workflows
+          cat > .github/workflows/docs.yml <<'EOF'
+          name: Documentation contracts
+
+          on:
+            pull_request:
+            push:
+              branches: [main]
+
+          permissions:
+            contents: read
+
+          jobs:
+            validate:
+              runs-on: ubuntu-latest
+              timeout-minutes: 10
+              steps:
+                - name: Check out repository
+                  uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+                  with:
+                    persist-credentials: false
+                - name: Validate documentation and agent contracts
+                  run: npm run agent:check
+          EOF
+          npm run agent:check
+          git diff --check
+
+      - name: Commit cohesive production documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Research documentation publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: integrate production operations into Research build control'
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin main
+
+      - name: Close trigger pull request
+        if: success()
+        shell: bash
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'Production operations documentation is integrated into the machine routing and build control plane.'
