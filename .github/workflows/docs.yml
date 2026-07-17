@@ -1,0 +1,26 @@
+name: Documentation contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate agent and documentation control plane
+        run: node scripts/validate-agent-control.mjs
+      - name: Resolve next implementation slice
+        run: node scripts/agent-status.mjs
+      - name: Build next-slice context
+        run: node scripts/agent-context.mjs > /tmp/agent-context.md
+      - name: Check whitespace
+        run: git diff --check
