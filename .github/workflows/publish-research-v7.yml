@@ -63,19 +63,18 @@ jobs:
           patch_file='${{ steps.patch.outputs.patch_file }}'
           publish=/tmp/research-v7-publish
           validate=/tmp/research-v7-validate
-          canonical_workflow=/tmp/research-docs.yml
+          canonical_workflow="$GITHUB_WORKSPACE/.v7-final-patch/docs.yml"
 
           rm -rf "$publish" "$validate"
           git clone --quiet "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
           cd "$publish"
           git checkout main
-          [[ "$(git rev-parse HEAD)" == '6def81789085e33661e36727dc920616fb1e22aa' ]] || {
-            echo "main changed after patch generation; refusing stale publication" >&2
+          git diff --quiet 6def81789085e33661e36727dc920616fb1e22aa HEAD -- . ':(exclude).github/workflows/**' || {
+            echo "non-workflow main content changed after patch generation; refusing stale publication" >&2
             exit 1
           }
 
-          git apply --index --binary --whitespace=error-all "$patch_file"
-          cp .github/workflows/docs.yml "$canonical_workflow"
+          git apply --index --binary --whitespace=error-all --exclude='.github/workflows/*' "$patch_file"
 
           # The running workflow must remain present until this job completes.
           # Workflow files are finalized through the connected GitHub integration
