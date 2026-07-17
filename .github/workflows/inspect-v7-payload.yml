@@ -1,0 +1,30 @@
+name: Inspect Research V7 payload transfer
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  inspect:
+    if: github.event.pull_request.title == '[system] inspect Research V7 payload'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://research-v7-payload-path-test-99f196n88-wades-web-dev.vercel.app/payload.txt?_vercel_share=G6BV19yweLIumkTsYbWsXWrWeqP5LGVu'
+          file=/tmp/payload.txt
+          cookies=/tmp/vercel.cookies
+          curl --fail --silent --show-error --location --max-redirs 10 \
+            --cookie-jar "$cookies" --cookie "$cookies" \
+            "$url" -o "$file"
+          bytes="$(wc -c < "$file" | tr -d ' ')"
+          prefix="$(head -c 80 "$file" | tr '\n' ' ')"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --body "Payload bytes: \`$bytes\`\n\nPrefix: \`$prefix\`"
