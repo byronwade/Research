@@ -38,12 +38,12 @@ jobs:
 
           find .canonical-v6-final -maxdepth 1 -type f -name 'part-*.b64' -print | LC_ALL=C sort > "$parts"
           part_count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$part_count" -eq 16 ]] || { echo "Expected 16 payload parts, found $part_count" >&2; exit 1; }
+          [[ "$part_count" -eq 120 ]] || { echo "Expected 120 payload parts, found $part_count" >&2; exit 1; }
 
           while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
           base64 --decode "$encoded" > "$archive"
 
-          expected='77cff154bab44e8f9eb33745fd1d727c010e8f108eac2a49b076272a820f7ac0'
+          expected='62cec70fd932cd02469ad9e3304bdaa906a5eea923f5b8ffbdbabf2cd706da28'
           actual="$(sha256sum "$archive" | awk '{print $1}')"
           [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
           xz -t "$archive"
