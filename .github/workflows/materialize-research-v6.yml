@@ -1,38 +1,32 @@
-name: Materialize complete Research V6 repository
+name: Publish complete Research V6 repository
 
 on:
-  issues:
-    types: [opened]
   pull_request:
     types: [opened, reopened, synchronize]
-  workflow_dispatch:
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
-  group: materialize-research-v6
+  group: publish-complete-research-v6
   cancel-in-progress: false
 
 jobs:
-  materialize:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issues' && github.event.issue.title == '[system] materialize Research V6') ||
-      (github.event_name == 'pull_request' && github.event.pull_request.title == '[system] materialize Research V6')
+  publish:
+    if: github.event.pull_request.title == '[system] publish complete Research V6'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out staged repository
+      - name: Check out staged payload
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Reconstruct, validate, and publish canonical tree
+      - name: Reconstruct and validate canonical source
+        id: source
         shell: bash
         run: |
           set -euo pipefail
@@ -42,26 +36,21 @@ jobs:
           archive=/tmp/research-v6.tar.xz
           source=/tmp/research-v6-source
 
-          find .bootstrap -maxdepth 1 -type f -name 'archive.part-*' -print | LC_ALL=C sort > "$parts"
+          find .canonical-v6-final -maxdepth 1 -type f -name 'part-*.b64' -print | LC_ALL=C sort > "$parts"
           part_count="$(wc -l < "$parts" | tr -d ' ')"
-          if [[ "$part_count" -lt 2 ]]; then
-            echo "Expected staged archive parts under .bootstrap; found $part_count" >&2
-            find . -maxdepth 3 -type f -not -path './.git/*' -printf '%12s %p\n' | sort -nr >&2
-            exit 1
-          fi
+          [[ "$part_count" -eq 16 ]] || { echo "Expected 16 payload parts, found $part_count" >&2; exit 1; }
 
           while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
           base64 --decode "$encoded" > "$archive"
+
+          expected='77cff154bab44e8f9eb33745fd1d727c010e8f108eac2a49b076272a820f7ac0'
+          actual="$(sha256sum "$archive" | awk '{print $1}')"
+          [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
           xz -t "$archive"
 
           rm -rf "$source"
           mkdir -p "$source"
           tar -xJf "$archive" -C "$source"
-
-          mapfile -t roots < <(find "$source" -mindepth 1 -maxdepth 1 -print)
-          if [[ ${#roots[@]} -eq 1 && -d "${roots[0]}" ]]; then
-            source="${roots[0]}"
-          fi
 
           required=(
             README.md
@@ -100,19 +89,36 @@ jobs:
           node scripts/validate-doc-cohesion.mjs
           node scripts/validate-product-readiness.mjs
 
-          rm -rf .git
-          git init -b main
+          echo "source=$source" >> "$GITHUB_OUTPUT"
+
+      - name: Replace main with the validated canonical tree
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source='${{ steps.source.outputs.source }}'
+          publish=/tmp/research-v6-publish
+          rm -rf "$publish"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
+          cd "$publish"
+          git checkout main
+
+          # Keep workflow files unchanged during this Actions-authenticated commit.
+          # The connector removes the one-time import workflows and installs the
+          # canonical docs workflow immediately after publication.
+          rsync -a --delete \
+            --exclude '.git/' \
+            --exclude '.github/workflows/' \
+            "$source"/ "$publish"/
+
           git config user.name 'Research repository publisher'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
           git diff --cached --check
           git commit -m 'docs: publish complete Research V6 specification'
-          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push --force origin main:main
+          git push origin main
 
-      - name: Close trigger issue
-        if: success() && github.event_name == 'issues'
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Close trigger pull request
+        if: success()
         shell: bash
-        run: gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment 'Canonical Research V6 tree validated and published to main.'
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The complete validated Research V6 tree has been published directly to main.'
