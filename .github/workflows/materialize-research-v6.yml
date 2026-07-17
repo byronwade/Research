@@ -38,7 +38,7 @@ jobs:
 
           find .canonical-v6-final -maxdepth 1 -type f -name 'part-*.b64' -print | LC_ALL=C sort > "$parts"
           part_count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$part_count" -eq 10 ]] || { echo "Expected 10 payload parts, found $part_count" >&2; exit 1; }
+          [[ "$part_count" -eq 120 ]] || { echo "Expected 120 payload parts, found $part_count" >&2; exit 1; }
 
           while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
           base64 --decode "$encoded" > "$archive"
