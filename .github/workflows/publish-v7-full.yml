@@ -1,0 +1,111 @@
+name: Publish complete validated Research V7 tree
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: publish-complete-research-v7
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.pull_request.title == '[system] publish complete validated Research V7'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out staged archive
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reconstruct and validate canonical source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          parts=/tmp/research-v7-parts.txt
+          encoded=/tmp/research-v7.tar.xz.b64
+          archive=/tmp/research-v7.tar.xz
+          source=/tmp/research-v7-source
+
+          find .publish-v7-full -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
+          count="$(wc -l < "$parts" | tr -d ' ')"
+          [[ "$count" -eq 26 ]] || { echo "Expected 26 archive parts, found $count" >&2; exit 1; }
+          while IFS= read -r part; do cat "$part"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+          encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
+          [[ "$encoded_bytes" -eq 502780 ]] || { echo "Expected 502780 encoded bytes, found $encoded_bytes" >&2; exit 1; }
+          base64 --decode "$encoded" > "$archive"
+          expected='20fab4d18ee0df980f62eb17053daf8a4a8ce42cb48b16bee98bf65d5d686e6d'
+          actual="$(sha256sum "$archive" | awk '{print $1}')"
+          [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
+          xz -t "$archive"
+
+          rm -rf "$source"
+          mkdir -p "$source"
+          tar -xJf "$archive" -C "$source"
+
+          required=(
+            README.md AGENTS.md PRODUCT.md ARCHITECTURE.md ROADMAP.md SECURITY.md
+            docs/START-HERE.md docs/README.md
+            docs/02-architecture/schema-contract-and-data-evolution.md
+            docs/05-security/secure-software-supply-chain.md
+            docs/05-security/secrets-encryption-and-configuration.md
+            docs/05-security/web-application-security-baseline.md
+            docs/06-delivery/release-engineering-and-change-control.md
+            docs/06-delivery/performance-capacity-and-load-engineering.md
+            docs/_meta/agent-routing.json docs/_meta/build-plan.json
+            docs/_meta/implementation-status.json docs/_meta/manifest.json
+            scripts/agent-status.mjs scripts/agent-context.mjs
+            scripts/validate-workflow-security.mjs package.json
+          )
+          for path in "${required[@]}"; do
+            [[ -f "$source/$path" ]] || { echo "Missing canonical file: $path" >&2; exit 1; }
+          done
+
+          file_count="$(find "$source" -type f | wc -l | tr -d ' ')"
+          markdown_count="$(find "$source" -type f -name '*.md' | wc -l | tr -d ' ')"
+          [[ "$file_count" -eq 235 ]] || { echo "Expected 235 files, found $file_count" >&2; exit 1; }
+          [[ "$markdown_count" -eq 204 ]] || { echo "Expected 204 Markdown files, found $markdown_count" >&2; exit 1; }
+
+          cd "$source"
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs > /tmp/research-v7-agent-context.txt
+          node scripts/validate-docs.mjs
+          node scripts/validate-tooling-catalog.mjs
+          node scripts/validate-notebooklm-catalog.mjs
+          node scripts/validate-agent-contract.mjs
+          node scripts/validate-doc-cohesion.mjs
+          node scripts/validate-product-readiness.mjs
+          node scripts/validate-workflow-security.mjs
+          echo "source=$source" >> "$GITHUB_OUTPUT"
+
+      - name: Publish canonical non-workflow tree to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          source='${{ steps.source.outputs.source }}'
+          publish=/tmp/research-v7-publish
+          rm -rf "$publish"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
+          cd "$publish"
+          git checkout main
+          rsync -a --delete --exclude '.git/' --exclude '.github/workflows/' "$source"/ "$publish"/
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: publish production-ready Research V7 specification'
+          git push origin main
+
+      - name: Close trigger pull request
+        if: success()
+        shell: bash
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The complete validated Research V7 tree has been published to main. Temporary publisher workflows are being removed in the finalization step.'
