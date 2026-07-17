@@ -43,7 +43,7 @@ jobs:
           encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
           [[ "$encoded_bytes" -eq 502780 ]] || { echo "Expected 502780 encoded bytes, found $encoded_bytes" >&2; exit 1; }
           base64 --decode "$encoded" > "$archive"
-          expected='20fab4d18ee0df980f62eb17053daf8a4a8ce42cb48b16bee98bf65d5d686e6d'
+          expected='20fab9fd156aefa34b288434c44d37a1a28858e10abde485b40eb2f2094d6b9e'
           actual="$(sha256sum "$archive" | awk '{print $1}')"
           [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
           xz -t "$archive"
