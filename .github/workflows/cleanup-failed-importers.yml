@@ -1,0 +1,63 @@
+name: Remove failed repository importer artifacts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cleanup-failed-importers.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify directly materialized documentation
+        run: |
+          set -euo pipefail
+          required=(
+            AGENTS.md
+            PRODUCT.md
+            ARCHITECTURE.md
+            ROADMAP.md
+            docs/START-HERE.md
+            docs/README.md
+            docs/_meta/requirements.json
+            docs/_meta/implementation-build-plan.json
+            docs/_meta/agent-routing.json
+            scripts/agent-status.mjs
+            scripts/agent-context.mjs
+            scripts/validate-agent-control.mjs
+          )
+          for path in "${required[@]}"; do
+            [[ -f "$path" ]] || { echo "Missing $path; refusing cleanup" >&2; exit 1; }
+          done
+          node scripts/validate-agent-control.mjs
+      - name: Remove failed importer staging
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap .research-import research-import
+          rm -f .github/workflows/import-v6.yml
+          rm -f .github/workflows/import-v6-final.yml
+          rm -f .github/workflows/finalize-publication.yml
+          rm -f .github/workflows/materialize-canonical-v6.yml
+          rm -f .github/workflows/publish-canonical-v6-from-tunnel.yml
+          rm -f .github/workflows/publish-canonical-v6-bore.yml
+          rm -f .github/workflows/actions-probe.yml
+          rm -f .github/workflows/materialization-diagnostic.yml
+          rm -f .github/workflows/cleanup-failed-importers.yml
+
+          git config user.name 'Research repository maintainer'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No importer artifacts remained.'
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m 'chore: remove failed canonical importer artifacts'
+          git push origin HEAD:main
