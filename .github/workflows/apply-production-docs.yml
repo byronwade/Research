@@ -1,11 +1,12 @@
 name: Apply production-ready Research documentation
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
+  issues: read
   pull-requests: write
 
 concurrency:
@@ -14,32 +15,53 @@ concurrency:
 
 jobs:
   apply:
-    if: github.event.pull_request.title == '[system] apply production-ready Research docs'
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.comment.body == '/apply-production-docs' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out patch payload
+      - name: Check out trusted main workflow
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          ref: main
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Reconstruct verified patch
+      - name: Reconstruct verified patch from PR comments
         id: patch
         shell: bash
         run: |
           set -euo pipefail
-          parts=/tmp/research-production-parts.txt
+          comments=/tmp/research-production-comments.json
           encoded=/tmp/research-production.patch.xz.b64
           archive=/tmp/research-production.patch.xz
           patch_file=/tmp/research-production.patch
+          number='${{ github.event.issue.number }}'
 
-          find .production-docs-patch16 -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
-          count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 8 ]] || { echo "Expected 8 patch parts, found $count" >&2; exit 1; }
-          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+          gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${number}/comments?per_page=100" > "$comments"
+          jq -r '
+            [ .[][]
+              | .body as $body
+              | select($body | startswith("RESEARCH_PRODUCTION_PATCH_PART_"))
+              | ($body | split("\n")) as $lines
+              | {
+                  index: ($lines[0] | sub("RESEARCH_PRODUCTION_PATCH_PART_"; "") | tonumber),
+                  payload: ($lines[1:] | join(""))
+                }
+            ]
+            | sort_by(.index)
+            | if length != 7 then error("Expected exactly 7 production patch comments") else . end
+            | if ([.[].index] != [0,1,2,3,4,5,6]) then error("Production patch comment indexes are incomplete") else . end
+            | map(.payload)
+            | join("")
+          ' "$comments" > "$encoded"
+
+          encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
+          [[ "$encoded_bytes" -eq 333360 ]] || { echo "Expected 333360 encoded bytes, found $encoded_bytes" >&2; exit 1; }
           base64 --decode "$encoded" > "$archive"
           expected='4bd79955cb3e6d549d9f1d286183aff4aecd7c84c3191d8c0fbe486288365309'
           actual="$(sha256sum "$archive" | awk '{print $1}')"
@@ -80,4 +102,4 @@ jobs:
       - name: Close trigger pull request
         if: success()
         shell: bash
-        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The production-ready documentation control plane was validated and published directly to main.'
+        run: gh pr close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The production-ready documentation control plane was validated and published directly to main.'
