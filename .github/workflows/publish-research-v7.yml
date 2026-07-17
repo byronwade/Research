@@ -20,30 +20,35 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out staged payload
+      - name: Check out trigger branch
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Reconstruct and validate canonical source
+      - name: Download, reconstruct, and validate canonical source
         id: source
         shell: bash
         run: |
           set -euo pipefail
 
-          parts=/tmp/research-v7-parts.txt
+          downloaded=/tmp/research-v7.downloaded.b64
           encoded=/tmp/research-v7.tar.xz.b64
           archive=/tmp/research-v7.tar.xz
           source=/tmp/research-v7-source
+          cookies=/tmp/research-v7-vercel.cookies
+          payload_url='https://research-v7-payload-path-test-99f196n88-wades-web-dev.vercel.app/payload.txt?_vercel_share=2teFwRc74grL6EWKZg6wr72nFV3qYc6G'
 
-          find .canonical-v7 -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
-          part_count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$part_count" -eq 7 ]] || { echo "Expected 7 payload parts, found $part_count" >&2; exit 1; }
+          curl --fail --silent --show-error --location --retry 3 \
+            --cookie-jar "$cookies" --cookie "$cookies" \
+            "$payload_url" -o "$downloaded"
+          tr -d '\r\n\t ' < "$downloaded" > "$encoded"
 
-          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+          encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
+          [[ "$encoded_bytes" -eq 502008 ]] || { echo "Expected 502008 encoded bytes, found $encoded_bytes" >&2; head -c 200 "$encoded" >&2 || true; exit 1; }
+          [[ "$(head -c 8 "$encoded")" == '/Td6WFoA' ]] || { echo 'Downloaded payload does not have the expected XZ base64 prefix.' >&2; exit 1; }
+
           base64 --decode "$encoded" > "$archive"
-
           expected='a1a8aa88a538a3ec6f63f4a3517c5e55a00df15a6bced8053f07ae2b7962576e'
           actual="$(sha256sum "$archive" | awk '{print $1}')"
           [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
