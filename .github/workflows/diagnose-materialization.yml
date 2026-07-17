@@ -1,0 +1,60 @@
+name: Diagnose Research materialization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-materialization.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diagnose staged archive
+        shell: bash
+        run: |
+          set +e
+          report=MATERIALIZATION_DIAGNOSTIC.md
+          parts=/tmp/research-parts.txt
+          encoded=/tmp/research.tar.xz.b64
+          archive=/tmp/research.tar.xz
+
+          find . -type f \
+            \( -path './.bootstrap/*' -o -path './.research-import/*' -o -path './research-import/*' \) \
+            -size +10000c -print | LC_ALL=C sort > "$parts"
+
+          {
+            echo '# Materialization diagnostic'
+            echo
+            echo '```text'
+            echo "commit=$(git rev-parse HEAD)"
+            echo "part_count=$(wc -l < "$parts" | tr -d ' ')"
+            while IFS= read -r path; do printf 'part %12s %s\n' "$(wc -c < "$path")" "$path"; done < "$parts"
+
+            while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+            echo "encoded_bytes=$(wc -c < "$encoded" | tr -d ' ')"
+            base64 --decode "$encoded" > "$archive" 2>/tmp/base64-error.txt
+            echo "base64_status=$?"
+            cat /tmp/base64-error.txt
+            echo "archive_bytes=$(wc -c < "$archive" | tr -d ' ')"
+            echo "archive_sha256=$(sha256sum "$archive" | awk '{print $1}')"
+            xz -t "$archive" 2>/tmp/xz-error.txt
+            echo "xz_status=$?"
+            cat /tmp/xz-error.txt
+            tar -tJf "$archive" >/tmp/archive-list.txt 2>/tmp/tar-error.txt
+            echo "tar_status=$?"
+            echo "archive_entries=$(wc -l < /tmp/archive-list.txt | tr -d ' ')"
+            head -20 /tmp/archive-list.txt
+            cat /tmp/tar-error.txt
+            echo '```'
+          } > "$report"
+
+          git config user.name 'Research materialization diagnostic'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$report"
+          git commit -m 'chore: record materialization diagnostic'
+          git push origin HEAD:main
