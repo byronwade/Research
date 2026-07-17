@@ -1,0 +1,121 @@
+name: Materialize canonical Research V6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/materialize-canonical-v6.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: materialize-canonical-research-v6
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out staging repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct canonical archive
+        id: archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          parts=/tmp/research-v6-parts.txt
+          encoded=/tmp/research-v6.tar.xz.b64
+          archive=/tmp/research-v6.tar.xz
+
+          find . -type f \
+            \( -path './.bootstrap/*' -o -path './.research-import/*' -o -path './research-import/*' \) \
+            -size +10000c -print | LC_ALL=C sort > "$parts"
+
+          if [[ ! -s "$parts" ]]; then
+            echo 'No canonical archive parts were found.' >&2
+            find . -maxdepth 3 -type f -not -path './.git/*' -printf '%12s %p\n' | sort -nr >&2
+            exit 1
+          fi
+
+          echo 'Archive parts:'
+          while IFS= read -r path; do printf '%12s %s\n' "$(wc -c < "$path")" "$path"; done < "$parts"
+
+          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+          base64 --decode "$encoded" > "$archive"
+
+          expected='0b34160f662ce6faa0b8bdc5e739a582afa5696f381374f8cbb52410668c2c81'
+          actual="$(sha256sum "$archive" | awk '{print $1}')"
+          [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
+          xz -t "$archive"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Extract and validate canonical tree
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          extracted=/tmp/research-v6-extracted
+          rm -rf "$extracted"
+          mkdir -p "$extracted"
+          tar -xJf '${{ steps.archive.outputs.archive }}' -C "$extracted"
+
+          mapfile -t roots < <(find "$extracted" -mindepth 1 -maxdepth 1 -print)
+          source="$extracted"
+          if [[ ${#roots[@]} -eq 1 && -d "${roots[0]}" ]]; then source="${roots[0]}"; fi
+
+          required=(
+            README.md
+            AGENTS.md
+            PRODUCT.md
+            ARCHITECTURE.md
+            docs/START-HERE.md
+            docs/README.md
+            docs/_meta/agent-routing.json
+            docs/_meta/build-plan.json
+            docs/_meta/implementation-status.json
+            docs/_meta/tooling-catalog.json
+            scripts/agent-status.mjs
+            scripts/agent-context.mjs
+            package.json
+          )
+          for path in "${required[@]}"; do
+            [[ -f "$source/$path" ]] || { echo "Missing canonical file: $path" >&2; exit 1; }
+          done
+
+          file_count="$(find "$source" -type f | wc -l | tr -d ' ')"
+          markdown_count="$(find "$source" -type f -name '*.md' | wc -l | tr -d ' ')"
+          [[ "$file_count" -eq 225 ]] || { echo "Expected 225 files, found $file_count" >&2; exit 1; }
+          [[ "$markdown_count" -ge 190 ]] || { echo "Expected at least 190 Markdown files, found $markdown_count" >&2; exit 1; }
+
+          cd "$source"
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs > /tmp/research-agent-context.txt
+          node scripts/validate-docs.mjs
+          node scripts/validate-tooling-catalog.mjs
+          node scripts/validate-notebooklm-catalog.mjs
+          node scripts/validate-agent-contract.mjs
+          node scripts/validate-doc-cohesion.mjs
+          node scripts/validate-product-readiness.mjs
+          git diff --no-index --check /dev/null . >/dev/null || true
+          echo "source=$source" >> "$GITHUB_OUTPUT"
+
+      - name: Replace staging tree and publish main
+        shell: bash
+        run: |
+          set -euo pipefail
+          source='${{ steps.source.outputs.source }}'
+          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$source"/. "$GITHUB_WORKSPACE"/
+          cd "$GITHUB_WORKSPACE"
+
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: publish complete Research V6 specification'
+          git push origin HEAD:main
