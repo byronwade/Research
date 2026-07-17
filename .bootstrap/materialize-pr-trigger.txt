@@ -1,0 +1,1 @@
+This branch exists only to trigger the validated one-time Research V6 materialization workflow.
