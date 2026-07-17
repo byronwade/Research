@@ -20,36 +20,31 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out patch payload
+      - name: Check out transparent patch payload
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Reconstruct validated patch
+      - name: Reconstruct and verify source patch
         id: patch
         shell: bash
         run: |
           set -euo pipefail
           parts=/tmp/research-v7-parts.txt
-          encoded=/tmp/research-v7.patch.xz.b64
-          archive=/tmp/research-v7.patch.xz
           patch_file=/tmp/research-v7.patch
 
-          find .v7-final-patch -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
+          find .v7-final-patch -maxdepth 1 -type f -name 'chunk-*' -print | LC_ALL=C sort > "$parts"
           count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 20 ]] || { echo "Expected 20 patch parts, found $count" >&2; exit 1; }
+          [[ "$count" -eq 8 ]] || { echo "Expected 8 patch chunks, found $count" >&2; exit 1; }
 
-          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
-          encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
-          [[ "$encoded_bytes" -eq 781360 ]] || { echo "Expected 781360 encoded bytes, found $encoded_bytes" >&2; exit 1; }
+          while IFS= read -r path; do cat "$path"; done < "$parts" > "$patch_file"
+          patch_bytes="$(wc -c < "$patch_file" | tr -d ' ')"
+          [[ "$patch_bytes" -eq 379607 ]] || { echo "Expected 379607 patch bytes, found $patch_bytes" >&2; exit 1; }
 
-          base64 --decode "$encoded" > "$archive"
-          expected='8fd159009f7af8452843082de056280338f76f2345730cc1f3a98a388b5a8424'
-          actual="$(sha256sum "$archive" | awk '{print $1}')"
+          expected='4e702b8cb18e082ee29f625535287dc02054b51c11f905650a3bc6df7ad42cfc'
+          actual="$(sha256sum "$patch_file" | awk '{print $1}')"
           [[ "$actual" == "$expected" ]] || { echo "Patch checksum mismatch: $actual" >&2; exit 1; }
-          xz -t "$archive"
-          xz --decompress --stdout "$archive" > "$patch_file"
           grep -q 'docs/00-foundation/requirements.md' "$patch_file"
           grep -q 'docs/06-delivery/release-engineering-and-change-control.md' "$patch_file"
           grep -q 'scripts/validate-workflow-security.mjs' "$patch_file"
@@ -74,12 +69,20 @@ jobs:
             exit 1
           }
 
-          git apply --index --binary --whitespace=error-all --exclude='.github/workflows/*' "$patch_file"
+          rm -rf \
+            .bootstrap \
+            .canonical-v6-payload \
+            .canonical-import-v6 \
+            .canonical-v6-final \
+            .research-import \
+            research-import \
+            .publication \
+            .v7-delta \
+            .v7-patch \
+            .v7-final-patch
+          rm -f ACTIONS_PROBE_RAN.md DIRECT_PUBLICATION_STATUS.md MATERIALIZATION_DIAGNOSTIC.md PROJECT_STATUS.md REPOSITORY_GUIDE.md TREE_API_TEST.txt TREE_TEST_2.md
 
-          # The running workflow must remain present until this job completes.
-          # Workflow files are finalized through the connected GitHub integration
-          # immediately after the validated non-workflow commit lands.
-          git restore --staged --worktree .github/workflows
+          git apply --binary --whitespace=error-all "$patch_file"
 
           mkdir -p "$validate"
           rsync -a --exclude '.git/' "$publish"/ "$validate"/
