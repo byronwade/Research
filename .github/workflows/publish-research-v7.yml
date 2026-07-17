@@ -1,4 +1,4 @@
-name: Publish validated Research V7 delta
+name: Publish validated Research V7 patch
 
 on:
   pull_request:
@@ -14,62 +14,68 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event.pull_request.title == '[system] publish validated Research V7 delta'
+    if: github.event.pull_request.title == '[system] publish validated Research V7 patch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out delta payload
+      - name: Check out patch payload
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Reconstruct validated V7 delta
-        id: delta
+      - name: Reconstruct validated V7 patch
+        id: patch
         shell: bash
         run: |
           set -euo pipefail
-          parts=/tmp/research-v7-delta-parts.txt
-          encoded=/tmp/research-v7-delta.tar.xz.b64
-          archive=/tmp/research-v7-delta.tar.xz
-          delta=/tmp/research-v7-delta
+          parts=/tmp/research-v7-patch-parts.txt
+          encoded=/tmp/research-v7.patch.xz.b64
+          archive=/tmp/research-v7.patch.xz
+          patch_file=/tmp/research-v7.patch
 
-          find .v7-delta -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
+          find .v7-patch -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
           count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 4 ]] || { echo "Expected 4 delta parts, found $count" >&2; exit 1; }
+          [[ "$count" -eq 2 ]] || { echo "Expected 2 patch parts, found $count" >&2; exit 1; }
 
           while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
           encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
-          [[ "$encoded_bytes" -eq 144616 ]] || { echo "Expected 144616 encoded bytes, found $encoded_bytes" >&2; exit 1; }
+          [[ "$encoded_bytes" -eq 44488 ]] || { echo "Expected 44488 encoded bytes, found $encoded_bytes" >&2; exit 1; }
 
           base64 --decode "$encoded" > "$archive"
-          expected='922340b61f03c0d94a86b0b8cbab0e436fcafc5e43f942050dbdda1a31481f96'
+          expected='a81d545ce8f97a8360632ea3df214e274b2644eecd87aa8da46353cd383f9b9f'
           actual="$(sha256sum "$archive" | awk '{print $1}')"
-          [[ "$actual" == "$expected" ]] || { echo "Delta checksum mismatch: $actual" >&2; exit 1; }
+          [[ "$actual" == "$expected" ]] || { echo "Patch checksum mismatch: $actual" >&2; exit 1; }
           xz -t "$archive"
+          xz --decompress --stdout "$archive" > "$patch_file"
+          grep -q 'release-engineering-and-change-control.md' "$patch_file"
+          grep -q 'validate-workflow-security.mjs' "$patch_file"
+          echo "patch_file=$patch_file" >> "$GITHUB_OUTPUT"
 
-          rm -rf "$delta"
-          mkdir -p "$delta"
-          tar -xJf "$archive" -C "$delta"
-          delta_count="$(find "$delta" -type f | wc -l | tr -d ' ')"
-          [[ "$delta_count" -eq 31 ]] || { echo "Expected 31 delta files, found $delta_count" >&2; exit 1; }
-          echo "delta=$delta" >> "$GITHUB_OUTPUT"
-
-      - name: Assemble and validate the complete V7 tree
+      - name: Apply patch and validate complete V7 tree
         id: source
         shell: bash
         run: |
           set -euo pipefail
-          delta='${{ steps.delta.outputs.delta }}'
+          patch_file='${{ steps.patch.outputs.patch_file }}'
           publish=/tmp/research-v7-publish
           validate=/tmp/research-v7-validate
+          canonical_workflow=/tmp/research-v7-docs.yml
 
           rm -rf "$publish" "$validate"
           git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
           cd "$publish"
           git checkout main
+
+          patch --batch --forward -p1 < "$patch_file"
+          cp .github/workflows/docs.yml "$canonical_workflow"
+
+          # Preserve current workflow files for the Actions-authenticated commit.
+          # The connector installs the canonical workflow and removes one-time
+          # publishers immediately after the documentation commit lands.
+          git restore .github/workflows
 
           rm -rf \
             .bootstrap \
@@ -78,16 +84,16 @@ jobs:
             .canonical-v7 \
             .research-import \
             research-import \
-            .publication
+            .publication \
+            .v7-delta \
+            .v7-patch
           rm -f MATERIALIZATION_DIAGNOSTIC.md PROJECT_STATUS.md TREE_API_TEST.txt TREE_TEST_2.md
-
-          rsync -a --exclude '.github/workflows/' "$delta"/ "$publish"/
 
           mkdir -p "$validate"
           rsync -a --exclude '.git/' "$publish"/ "$validate"/
           rm -rf "$validate/.github/workflows"
           mkdir -p "$validate/.github/workflows"
-          cp "$delta/.github/workflows/docs.yml" "$validate/.github/workflows/docs.yml"
+          cp "$canonical_workflow" "$validate/.github/workflows/docs.yml"
 
           required=(
             README.md
@@ -151,4 +157,4 @@ jobs:
       - name: Close trigger pull request
         if: success()
         shell: bash
-        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The validated Research V7 documentation and control-plane delta has been published to main. The repository finalization step will now install the canonical workflow and remove one-time publisher files.'
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The validated Research V7 documentation and production-stability control plane has been published to main. The repository finalization step will now install the canonical workflow and remove one-time publisher files.'
