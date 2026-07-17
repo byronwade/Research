@@ -1,85 +1,12 @@
-name: Apply production-ready Research documentation
+name: Disabled one-time production documentation transport
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
+  workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-
-concurrency:
-  group: apply-production-ready-research-docs
-  cancel-in-progress: false
+permissions: {}
 
 jobs:
-  apply:
-    if: github.event.pull_request.title == '[system] apply production-ready Research docs'
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Check out patch payload
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Reconstruct verified patch
-        id: patch
-        shell: bash
-        run: |
-          set -euo pipefail
-          parts=/tmp/research-production-parts.txt
-          encoded=/tmp/research-production.patch.xz.b64
-          archive=/tmp/research-production.patch.xz
-          patch_file=/tmp/research-production.patch
-
-          find .production-docs-patch16 -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
-          count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 8 ]] || { echo "Expected 8 patch parts, found $count" >&2; exit 1; }
-          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
-          encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
-          [[ "$encoded_bytes" -eq 333360 ]] || { echo "Expected 333360 encoded bytes, found $encoded_bytes" >&2; exit 1; }
-          base64 --decode "$encoded" > "$archive"
-          expected='4bd79955cb3e6d549d9f1d286183aff4aecd7c84c3191d8c0fbe486288365309'
-          actual="$(sha256sum "$archive" | awk '{print $1}')"
-          [[ "$actual" == "$expected" ]] || { echo "Patch archive checksum mismatch: $actual" >&2; exit 1; }
-          xz -t "$archive"
-          xz --decompress --stdout "$archive" > "$patch_file"
-          echo "patch_file=$patch_file" >> "$GITHUB_OUTPUT"
-
-      - name: Apply, validate, and publish
-        shell: bash
-        run: |
-          set -euo pipefail
-          patch_file='${{ steps.patch.outputs.patch_file }}'
-          publish=/tmp/research-production-publish
-          rm -rf "$publish"
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
-          cd "$publish"
-          git checkout main
-
-          base='f527e611aa2b46d838c1045453fd209efe8c1458'
-          git merge-base --is-ancestor "$base" HEAD || { echo 'Expected baseline is not an ancestor of main.' >&2; exit 1; }
-          unexpected="$(git diff --name-only "$base"..HEAD | grep -v '^.github/workflows/apply-production-docs.yml$' || true)"
-          [[ -z "$unexpected" ]] || { echo 'Main changed outside the one-time workflow after the snapshot:' >&2; echo "$unexpected" >&2; exit 1; }
-
-          git apply --index --3way --whitespace=nowarn "$patch_file"
-          rm -rf .production-docs-patch .production-docs-patch16
-          rm -f .github/workflows/apply-production-docs.yml
-          git add -A
-
-          npm run agent:check
-          git diff --cached --check
-
-          git config user.name 'Research documentation publisher'
-          git config user.email 'actions@users.noreply.github.com'
-          git commit -m 'docs: establish production-ready implementation control plane'
-          git push origin main
-
-      - name: Close trigger pull request
-        if: success()
-        shell: bash
-        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The production-ready documentation control plane was validated and published directly to main.'
+      - run: echo 'This one-time transport has been superseded by direct, reviewed documentation commits.'
