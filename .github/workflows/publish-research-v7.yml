@@ -38,7 +38,7 @@ jobs:
 
           find .v7-patch -maxdepth 1 -type f -name 'part-*' -print | LC_ALL=C sort > "$parts"
           count="$(wc -l < "$parts" | tr -d ' ')"
-          [[ "$count" -eq 6 ]] || { echo "Expected 6 patch parts, found $count" >&2; exit 1; }
+          [[ "$count" -eq 10 ]] || { echo "Expected 10 patch parts, found $count" >&2; exit 1; }
 
           while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
           encoded_bytes="$(wc -c < "$encoded" | tr -d ' ')"
