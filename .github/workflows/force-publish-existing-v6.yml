@@ -1,0 +1,85 @@
+name: Force publish canonical Research V6
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: force-publish-canonical-research-v6
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.issue.title == '[system] force publish Research V6'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out complete canonical archive branch
+        uses: actions/checkout@v4
+        with:
+          ref: canonical-import-v6
+          fetch-depth: 0
+
+      - name: Reconstruct, validate, and publish canonical source
+        shell: bash
+        run: |
+          set -euo pipefail
+          parts=/tmp/research-v6-parts.txt
+          encoded=/tmp/research-v6.tar.xz.b64
+          archive=/tmp/research-v6.tar.xz
+          source=/tmp/research-v6-source
+          publish=/tmp/research-v6-publish
+
+          find .canonical-import-v6 -maxdepth 1 -type f -name 'part-*.b64' -print | LC_ALL=C sort > "$parts"
+          part_count="$(wc -l < "$parts" | tr -d ' ')"
+          [[ "$part_count" -eq 32 ]] || { echo "Expected 32 canonical archive parts, found $part_count" >&2; exit 1; }
+          while IFS= read -r path; do cat "$path"; done < "$parts" | tr -d '\r\n\t ' > "$encoded"
+          base64 --decode "$encoded" > "$archive"
+          expected='f0a879a204864cb44a4e05309c083bd53a538cf4c12c9a0bfc7de239389da2fc'
+          actual="$(sha256sum "$archive" | awk '{print $1}')"
+          [[ "$actual" == "$expected" ]] || { echo "Archive checksum mismatch: $actual" >&2; exit 1; }
+          xz -t "$archive"
+
+          rm -rf "$source" "$publish"
+          mkdir -p "$source"
+          tar -xJf "$archive" -C "$source"
+          required=(README.md AGENTS.md PRODUCT.md ARCHITECTURE.md ROADMAP.md SECURITY.md docs/START-HERE.md docs/README.md docs/_meta/agent-routing.json docs/_meta/build-plan.json docs/_meta/requirements.json docs/_meta/implementation-status.json scripts/agent-status.mjs scripts/agent-context.mjs package.json)
+          for path in "${required[@]}"; do [[ -f "$source/$path" ]] || { echo "Missing canonical file: $path" >&2; exit 1; }; done
+          [[ "$(find "$source" -type f | wc -l | tr -d ' ')" -eq 225 ]]
+          [[ "$(find "$source" -type f -name '*.md' | wc -l | tr -d ' ')" -eq 195 ]]
+
+          cd "$source"
+          node scripts/agent-status.mjs
+          node scripts/agent-context.mjs > /tmp/research-agent-context.txt
+          node scripts/validate-docs.mjs
+          node scripts/validate-tooling-catalog.mjs
+          node scripts/validate-notebooklm-catalog.mjs
+          node scripts/validate-agent-contract.mjs
+          node scripts/validate-doc-cohesion.mjs
+          node scripts/validate-product-readiness.mjs
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$publish"
+          cd "$publish"
+          git checkout main
+          rsync -a --delete --exclude '.git/' --exclude '.github/workflows/' "$source"/ "$publish"/
+          git config user.name 'Research repository publisher'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs: publish complete Research V6 specification'
+            git push origin main
+          else
+            echo 'Canonical Research V6 source is already present on main.'
+          fi
+
+      - name: Close trigger issue
+        if: success()
+        shell: bash
+        run: gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment 'Canonical Research V6 source validated and published to main.'
