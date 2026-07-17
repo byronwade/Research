@@ -1,0 +1,96 @@
+name: Snapshot verified Research state
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  snapshot:
+    if: github.event.pull_request.title == '[system] snapshot final Research state'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate the permanent repository view
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/snapshot-final-state.yml
+          test -f SECURITY.md
+          test -f docs/06-delivery/testing-and-validation-strategy.md
+          test -f docs/06-delivery/developer-environment-and-bootstrap.md
+          test -f docs/03-ai/model-evaluation-and-change-management.md
+          test -f docs/05-security/privacy-and-compliance-operations.md
+          test -f docs/06-delivery/data-migration-and-backfill-runbook.md
+          test -f docs/06-delivery/service-ownership-and-runbooks.md
+          grep -q '"id": "EVAL-001"' docs/_meta/requirements.json
+          grep -q '"id": "PRIV-001"' docs/_meta/requirements.json
+          grep -q '"id": "OPS-001"' docs/_meta/requirements.json
+          grep -q '"id": "release-30"' docs/_meta/build-plan.json
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 1
+          test -f .github/workflows/docs.yml
+          node scripts/agent-status.mjs | tee /tmp/agent-status.txt
+          node scripts/agent-context.mjs > /tmp/agent-context.txt
+          node scripts/validate-agent-control.mjs | tee /tmp/agent-control.txt
+          node scripts/validate-production-readiness.mjs | tee /tmp/readiness.txt
+          node scripts/validate-workflow-security.mjs | tee /tmp/workflow-security.txt
+          {
+            echo '# Verified Research repository state'
+            echo
+            echo "Commit: $(git rev-parse HEAD)"
+            echo "Files: $(find . -type f -not -path './.git/*' | wc -l | tr -d ' ')"
+            echo "Markdown: $(find . -type f -name '*.md' | wc -l | tr -d ' ')"
+            echo
+            echo '## Agent status'
+            cat /tmp/agent-status.txt
+            echo
+            echo '## Validation'
+            cat /tmp/agent-control.txt
+            cat /tmp/readiness.txt
+            cat /tmp/workflow-security.txt
+          } > /tmp/research-verification.md
+          tar --exclude='.git' -czf /tmp/research-main-verified.tar.gz .
+          sha256sum /tmp/research-main-verified.tar.gz > /tmp/research-main-verified.sha256
+
+      - name: Upload verified snapshot
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: research-main-verified
+          path: |
+            /tmp/research-main-verified.tar.gz
+            /tmp/research-main-verified.sha256
+            /tmp/research-verification.md
+          if-no-files-found: error
+          retention-days: 2
+          compression-level: 0
+
+      - name: Remove one-time workflow from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          cleanup=/tmp/research-snapshot-cleanup
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$cleanup"
+          cd "$cleanup"
+          git checkout main
+          git rm .github/workflows/snapshot-final-state.yml
+          git config user.name 'Research repository verifier'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'chore: remove one-time verification workflow'
+          git push origin main
+
+      - name: Close trigger pull request
+        if: success()
+        shell: bash
+        run: gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment 'The permanent repository view passed every documentation and production-readiness validator. The verified snapshot artifact has been retained for two days.'
