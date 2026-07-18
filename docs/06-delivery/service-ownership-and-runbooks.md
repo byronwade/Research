@@ -26,15 +26,15 @@ Catalog entries are reviewed with architecture and ownership changes. Orphaned c
 
 ## Ownership boundaries
 
-The initial modular monolith may deploy as one application, but ownership remains aligned to domain boundaries: identity and Projects, Sources, ingestion and parsing, retrieval, Chat, claims and evidence, Documents, Research Runs, Studio, GitHub, publication, usage and billing, developer platform, and operations.
+The initial modular monolith may deploy as one application, but ownership remains aligned to domain boundaries: identity and Projects, Project settings and administration, Sources, ingestion and parsing, retrieval, Chat, claims and evidence, Documents, Research Runs, Studio, delegated-trust approval policy, abuse prevention and trust safety, GitHub, publication, usage and billing, developer platform, and operations.
 
-Shared infrastructure has an explicit platform owner. A shared package does not erase responsibility for product behavior that depends on it.
+Shared infrastructure has an explicit platform owner. SupportDiagnosticBundles, SupportAccessRequests, SupportAccessSessions, support audit exports, and break-glass reviews have a support operations owner plus security/privacy review ownership. A shared package does not erase responsibility for product behavior that depends on it.
 
 ## On-call model
 
 Every production page routes to a staffed escalation path with access to the required dashboards and safe operational tools. The schedule defines primary, secondary, incident commander, security escalation, privacy escalation, and vendor escalation.
 
-On-call access follows least privilege and is reviewed regularly. Emergency access is time-bound and audited. Operators are not expected to browse raw customer content to diagnose ordinary failures.
+On-call access follows least privilege and is reviewed regularly. Emergency access is time-bound and audited. Operators are not expected to browse raw customer content to diagnose ordinary failures; SupportDiagnosticBundles are the default diagnostic artifact before private-content access is requested.
 
 ## Alert quality
 
@@ -88,6 +88,10 @@ Before launch, runbooks exist and are exercised for:
 - document revision or publication failure;
 - accidental public exposure and takedown;
 - billing and usage reconciliation;
+- Project settings or support-grant misconfiguration;
+- SupportDiagnosticBundle generation failure, overbroad bundle detection, SupportAccessRequest backlog, SupportAccessSession expiry or revocation failure, support audit export failure, and break-glass review breach;
+- delegated-trust grant abuse, approval fatigue threshold breach, stale receipt reuse, approval batch widening, and grant revocation failure;
+- abuse-control bypass, false-positive spike, appeal backlog, source-acquisition abuse, public-publication spam, API fanout, MCP abuse, GitHub proposal spam, connector-write spam, notification spam, recipe-trigger abuse, provider-policy bypass, content-safety block spike, and emergency-control failure;
 - key compromise or rotation failure;
 - regional degradation and disaster recovery;
 - rollback and forward recovery.
@@ -109,6 +113,8 @@ A feature cannot be released until ownership has accepted:
 - feature flags and kill switches;
 - migration and rollback procedures;
 - customer-support diagnostics;
+- abuse review, appeal, false-positive, emergency-control, and content-minimized trust-safety diagnostics;
+- support access request, support session, audit export, and break-glass review procedures;
 - security, privacy, and deletion implications;
 - runbooks and game-day scenarios.
 

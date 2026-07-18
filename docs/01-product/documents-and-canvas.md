@@ -46,6 +46,8 @@ Agents return typed operations such as create file, move file, rename file, inse
 - Public/private projection preview.
 - Export to Markdown, JSON, HTML, Word, PDF, and other typed formats.
 
+Comments, mentions, assignments, suggestions, review requests, decision records, and presence are governed by [`collaboration-review-and-decision-workflows.md`](collaboration-review-and-decision-workflows.md). They anchor to document revisions, blocks, ranges, and patch operations without becoming a second document authority.
+
 ## Long-form behavior
 
 Large documents are assembled from section contracts rather than one-shot generation. Each section has required claims, evidence, target length, dependencies, terminology, prohibited duplication, and completion criteria. Global audits verify numerical, entity, terminology, citation, and structural consistency.

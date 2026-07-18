@@ -40,9 +40,11 @@ User request
 
 The agent cannot directly write to the default branch, merge a pull request, change repository permissions, bypass required checks, or silently rebase conflicting upstream changes.
 
+GitHub contribution proposals also pass AbusePolicy and repository-owner policy before branch creation, issue/comment creation, or draft pull-request creation. Research must prevent AI pull-request spam, duplicated proposals, low-signal issue noise, and rate-limit evasion through repository-scoped budgets, proposal cooldowns, validation gates, review ActionCards, and draft PR defaults.
+
 ## Edit contract
 
-The contract contains objective, repository, base commit, allowed paths, prohibited paths, expected behavior, required checks, dependency policy, documentation requirements, branch strategy, approval rules, and completion criteria.
+The contract contains objective, repository, base commit, allowed paths, prohibited paths, expected behavior, required checks, dependency policy, AbuseDecision, documentation requirements, branch strategy, approval rules, and completion criteria.
 
 ## Citation behavior
 

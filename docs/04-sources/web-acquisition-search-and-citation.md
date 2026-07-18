@@ -14,13 +14,13 @@ Search and fetch are separate tools. Search discovers candidates; fetch creates 
 
 ## Safety boundary
 
-Before any request, Research validates scheme, hostname, port, DNS resolution, IP range, redirect target, credential policy, and Project egress rules. Private, loopback, link-local, metadata-service, file, and unsupported protocols are denied unless an isolated approved connector explicitly owns them.
+Before any request, Research validates scheme, hostname, port, DNS resolution, IP range, redirect target, credential policy, AbusePolicy, source-acquisition quota, and Project egress rules. Private, loopback, link-local, metadata-service, file, and unsupported protocols are denied unless an isolated approved connector explicitly owns them.
 
 DNS and redirect checks repeat at connection time. Response bytes, time, redirects, decompression, media type, and browser resources are bounded. Browser sessions have no ambient cloud, connector, tenant, or secret access.
 
 ## Rights and policy
 
-Acquisition records the request purpose, actor, access method, authentication basis, robots and site-policy observations where applicable, license or rights classification, quotation limits, redistribution limits, and takedown path.
+Acquisition records the request purpose, actor, access method, authentication basis, AbuseDecision, robots and site-policy observations where applicable, license or rights classification, quotation limits, redistribution limits, and takedown path.
 
 Robots directives and terms inform acquisition policy but are not treated as a complete legal determination. Public accessibility does not automatically authorize full-text redistribution or public publication.
 
@@ -62,7 +62,7 @@ Extraction preserves a mapping from normalized elements to the captured DOM or r
 ```text
 research question
 → query decomposition
-→ provider search under policy and budget
+→ provider search under policy, AbusePolicy, and budget
 → candidate normalization and deduplication
 → source-quality and diversity review
 → fetch selected candidates
@@ -87,7 +87,7 @@ Citations record retrieval time because the live page may change. Search snippet
 
 ## Authenticated and dynamic sites
 
-Authenticated capture uses a scoped connector or user-controlled capture path. Session material is encrypted, isolated, short-lived where possible, and excluded from browser logs and snapshots. Research never attempts to bypass access controls, paywalls, anti-bot systems, or technical restrictions without explicit authorization and policy.
+Authenticated capture uses a scoped connector or user-controlled capture path. Session material is encrypted, isolated, short-lived where possible, and excluded from browser logs and snapshots. Research never attempts to bypass access controls, paywalls, anti-bot systems, rate limits, AbusePolicy, or technical restrictions without explicit authorization and policy.
 
 ## Verification fixtures
 

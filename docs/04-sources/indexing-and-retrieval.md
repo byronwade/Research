@@ -27,6 +27,8 @@ Indexes preserve document structure and source locators. Units may include secti
 
 Authorization filters execute before candidate text is returned to the model or external reranker. Cross-tenant caches and embeddings are prohibited. Source revocation invalidates affected context packs and derived access.
 
+Authorization also executes before language detection, translation, query expansion, embedding, cross-language reranking, model context assembly, or support diagnostics. Cross-language retrieval records query language, source language filters, translation route, unsupported-language limitations, and whether translated material is used only for discovery or also for user-visible presentation.
+
 ## Retrieval output
 
 A retrieval result distinguishes:
@@ -38,9 +40,15 @@ A retrieval result distinguishes:
 - examined but unused sources;
 - and sources excluded by policy.
 
+## Context packs
+
+Retrieval may assemble context material into a versioned context pack for a model, agent, MCP client, SDK user, or human handoff. Pack assembly uses the same authorization-before-retrieval boundary, records source-version IDs and exclusions, and is invalidated by source revocation, policy change, memory deletion, or document revision changes. See [`../02-architecture/context-packs-and-agent-handoff.md`](../02-architecture/context-packs-and-agent-handoff.md).
+
 ## Quality evaluation
 
 Evaluate candidate recall, reranking precision, evidence-span accuracy, citation entailment, source independence, freshness, latency, and cost on versioned fixtures. Vector similarity alone is not a success metric.
+
+International retrieval evaluations include Unicode, accent, CJK, mixed-direction, RTL, translated-query, untranslated-source, locale-specific tokenization, and unsupported-language fixtures. Translated query matches are not counted as citation support unless the selected EvidenceSpan still entails the claim in the authorized source context.
 
 ## Caching
 

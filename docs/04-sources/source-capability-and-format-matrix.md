@@ -12,7 +12,7 @@ Research accepts broad source input without pretending every format has equal un
 | Citable | Evidence resolves to a stable page, region, line, timecode, cell, message, commit, or structural locator |
 | Richly understood | Tables, layout, figures, scenes, formulas, code symbols, relationships, or other native structure are modeled |
 
-The interface shows these capabilities and never represents “uploaded” as “fully understood.”
+SourceVersions also record language, direction, reading-order, alt-text, caption, transcript, table-header, chart-data, and accessible-output capability where applicable. The interface shows these capabilities and never represents “uploaded” as “fully understood.”
 
 ## Initial support matrix
 
@@ -49,6 +49,8 @@ configuration and feature flags
 sandbox image or execution identity
 start/end and resource usage
 warnings and confidence
+language and direction metadata
+reading-order and accessibility capability status
 normalized element schema version
 derivative checksums
 locator mapping version
@@ -78,4 +80,4 @@ A source may remain stored and inspectable while search or citation processing f
 
 ## Acceptance fixtures
 
-The format suite includes multilingual text, RTL, complex tables, footnotes, multi-column PDFs, scans, handwriting samples for evaluation, charts, embedded files, formulas, tracked changes, comments, speaker notes, spreadsheet formulas, long media, diarization, code repositories, symlinks, Git LFS references, malformed containers, polyglots, and decompression bombs.
+The format suite includes multilingual text, BCP 47 language metadata, mixed-direction text, RTL, complex tables, footnotes, multi-column PDFs, scans, handwriting samples for evaluation, charts with and without data fallback, embedded files, formulas, tracked changes, comments, speaker notes, spreadsheet formulas, long media, captions, transcripts, diarization, code repositories, symlinks, Git LFS references, malformed containers, polyglots, and decompression bombs.

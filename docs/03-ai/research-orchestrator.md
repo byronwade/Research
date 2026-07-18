@@ -6,6 +6,7 @@ Deep research is a durable evidence workflow, not a single oversized model call.
 
 ```text
 Classify request
+→ capture intent and run preflight
 → clarify and compile ResearchContract
 → create editable plan and outline
 → freeze permissions, source versions, model policy, and budgets
@@ -21,13 +22,17 @@ Classify request
 → assemble documents and artifacts
 → audit citations, claims, privacy, and structure
 → propose typed patches
+→ open review requests and decision records where required
 → obtain approval and commit revisions
 → schedule maintenance where requested
 ```
 
 ## Research contract
 
-A contract records the question, objectives, audience, deliverables, date and geographic scope, source rules, required viewpoints, prohibited sources, citation standard, output structure, target length, model policy, tools, budgets, approval points, and completion criteria.
+A contract records the accepted intent version, question, objectives, audience, deliverables, date and geographic scope, source rules, required viewpoints, prohibited sources, citation standard, output structure, target length, model policy, tools, budgets, approval points, assumptions, open questions, and completion criteria.
+
+Intent capture and clarification policy are governed by [`../01-product/intent-capture-and-prompt-friction.md`](../01-product/intent-capture-and-prompt-friction.md) and [`../02-architecture/intent-preflight-and-clarification-policy.md`](../02-architecture/intent-preflight-and-clarification-policy.md). The orchestrator asks only when missing information materially changes source authority, risk, cost, output structure, approval path, or result scope. Otherwise it records safe assumptions and proceeds with an editable plan or reversible draft.
+Review requests, suggestions, and decisions produced by research work are governed by [`../01-product/collaboration-review-and-decision-workflows.md`](../01-product/collaboration-review-and-decision-workflows.md) and [`../02-architecture/collaboration-comments-and-decisions.md`](../02-architecture/collaboration-comments-and-decisions.md).
 
 ## Durable behavior
 

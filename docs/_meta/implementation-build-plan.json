@@ -4,31 +4,762 @@
   "runtimeState": "not-scaffolded",
   "nextSlice": "foundation-01",
   "slices": [
-    {"id":"foundation-01","order":1,"title":"Monorepo and quality foundation","status":"ready","dependencies":[],"documents":["AGENTS.md","docs/START-HERE.md","ARCHITECTURE.md","docs/08-build/README.md"],"deliverable":"pnpm/Turborepo workspace with TanStack Start, Hono, strict TypeScript, tests, architecture checks, and CI."},
-    {"id":"identity-02","order":2,"title":"Identity, organizations, Projects, and authorization","status":"planned","dependencies":["foundation-01"],"documents":["docs/01-product/project-workspace.md","docs/02-architecture/domain-model.md","docs/05-security/threat-model.md"],"deliverable":"Authenticated organizations, memberships, Projects, and policy enforcement."},
-    {"id":"persistence-03","order":3,"title":"Persistence, audit, and outbox","status":"planned","dependencies":["identity-02"],"documents":["docs/02-architecture/domain-model.md","docs/02-architecture/system-architecture.md"],"deliverable":"Postgres schema, migrations, Blob integration, audit log, and transactional outbox."},
-    {"id":"workspace-04","order":4,"title":"Project workspace shell","status":"planned","dependencies":["identity-02"],"documents":["docs/01-product/project-workspace.md","docs/01-product/chat.md","docs/01-product/documents-and-canvas.md","docs/01-product/sources.md"],"deliverable":"Responsive Chat/Documents/Sources shell."},
-    {"id":"uploads-05","order":5,"title":"Uploads and immutable sources","status":"planned","dependencies":["persistence-03","workspace-04"],"documents":["docs/01-product/sources.md","docs/04-sources/ingestion-pipeline.md"],"deliverable":"Resumable PDF upload, Source, SourceVersion, Blob object, permissions, and status UI."},
-    {"id":"parsing-06","order":6,"title":"PDF parsing and evidence viewer","status":"planned","dependencies":["uploads-05"],"documents":["docs/04-sources/ingestion-pipeline.md","docs/03-ai/claims-evidence-citations.md"],"deliverable":"Normalized PDF elements, exact page locators, and source viewer."},
-    {"id":"indexing-07","order":7,"title":"Hybrid indexing and retrieval","status":"planned","dependencies":["parsing-06"],"documents":["docs/04-sources/indexing-and-retrieval.md","docs/05-security/threat-model.md"],"deliverable":"Permission-filtered lexical, vector, metadata retrieval and evaluation fixtures."},
-    {"id":"chat-08","order":8,"title":"Persistent streaming Chat","status":"planned","dependencies":["workspace-04","persistence-03"],"documents":["docs/01-product/chat.md","docs/02-architecture/system-architecture.md"],"deliverable":"Persistent AI SDK chat, model registry, attachments, tool events, and resumable streams."},
-    {"id":"grounding-09","order":9,"title":"Claims, evidence, and exact citations","status":"planned","dependencies":["indexing-07","chat-08"],"documents":["docs/03-ai/claims-evidence-citations.md","docs/04-sources/indexing-and-retrieval.md"],"deliverable":"Grounded responses, EvidenceSpans, Claims, exact citations, and verification."},
-    {"id":"documents-10","order":10,"title":"Canonical Markdown document system","status":"planned","dependencies":["workspace-04","persistence-03"],"documents":["docs/01-product/documents-and-canvas.md","docs/02-architecture/canonical-content-and-no-drift.md"],"deliverable":"Document tree, stable blocks, revisions, Plate canvas, CodeMirror, and typed patches."},
-    {"id":"vertical-11","order":11,"title":"Grounded PDF-to-document vertical slice","status":"planned","dependencies":["grounding-09","documents-10"],"documents":["docs/06-delivery/implementation-plan.md"],"deliverable":"Create Project through persisted cited Markdown document."},
-    {"id":"web-12","order":12,"title":"Web discovery and capture","status":"planned","dependencies":["vertical-11"],"documents":["docs/01-product/sources.md","docs/04-sources/ingestion-pipeline.md"],"deliverable":"Search, candidate review, HTTP-first capture, Playwright escalation, and immutable snapshots."},
-    {"id":"research-13","order":13,"title":"Research contracts and durable runs","status":"planned","dependencies":["vertical-11","web-12"],"documents":["docs/03-ai/research-orchestrator.md"],"deliverable":"Editable plans, Research Runs, progress, interruption, retries, budgets, and approvals."},
-    {"id":"engines-14","order":14,"title":"Research engine adapters","status":"planned","dependencies":["research-13"],"documents":["docs/03-ai/research-orchestrator.md","docs/07-reference/official-references.md"],"deliverable":"Provider-neutral OpenAI, Gemini, Tavily, Perplexity, and isolated open-source adapters."},
-    {"id":"agents-15","order":15,"title":"Bounded multi-agent control plane","status":"planned","dependencies":["research-13"],"documents":["docs/03-ai/multi-agent-orchestration.md"],"deliverable":"Typed task packets, specialist workers, coordinator, budgets, cancellation, and integration."},
-    {"id":"longform-16","order":16,"title":"Long-form document production","status":"planned","dependencies":["engines-14","agents-15","grounding-09","documents-10"],"documents":["docs/03-ai/research-orchestrator.md","docs/03-ai/claims-evidence-citations.md"],"deliverable":"Section contracts, global consistency ledger, assembly, editorial and citation audits."},
-    {"id":"maintenance-17","order":17,"title":"Living knowledge maintenance","status":"planned","dependencies":["longform-16"],"documents":["docs/02-architecture/canonical-content-and-no-drift.md"],"deliverable":"Source diffs, claim revalidation, dependency traversal, and minimal safe patches."},
-    {"id":"publishing-18","order":18,"title":"Public and private publishing","status":"planned","dependencies":["documents-10","grounding-09","maintenance-17"],"documents":["docs/01-product/public-private-publishing.md"],"deliverable":"Projection policies, privacy and rights audits, immutable PublicationSnapshots, and withdrawal."},
-    {"id":"studio-19","order":19,"title":"Research Studio artifacts","status":"planned","dependencies":["longform-16","documents-10"],"documents":["docs/01-product/research-studio.md"],"deliverable":"Typed artifact system, canvases, charts, evidence graphs, media, study, and export adapters."},
-    {"id":"github-20","order":20,"title":"GitHub source and contribution platform","status":"planned","dependencies":["vertical-11","agents-15"],"documents":["docs/04-sources/github-integration.md","docs/05-security/threat-model.md"],"deliverable":"GitHub App, commit-pinned indexing, sandboxed patches, validation, and draft pull requests."},
-    {"id":"connectors-21","order":21,"title":"Connector platform","status":"planned","dependencies":["web-12","persistence-03"],"documents":["docs/01-product/sources.md","docs/05-security/data-governance.md"],"deliverable":"Google Workspace, MCP, connector SDK, synchronization, revocation, and additional source families."},
-    {"id":"platform-22","order":22,"title":"Developer platform API","status":"planned","dependencies":["research-13","documents-10","uploads-05"],"documents":["docs/02-architecture/developer-platform-api.md"],"deliverable":"OpenAPI, Operations, SSE, webhooks, SDKs, CLI, and MCP."},
-    {"id":"memory-23","order":23,"title":"Inspectable Project memory","status":"planned","dependencies":["grounding-09","documents-10"],"documents":["docs/03-ai/project-memory.md"],"deliverable":"Versioned memory, decisions, conflicts, user controls, consolidation, and forgetting."},
-    {"id":"commercial-24","order":24,"title":"Commercial and customer operations","status":"planned","dependencies":["platform-22"],"documents":["PRODUCT.md","ROADMAP.md","docs/05-security/data-governance.md"],"deliverable":"Onboarding, imports, portability, entitlements, usage, billing, notifications, analytics, and support."},
-    {"id":"enterprise-25","order":25,"title":"Enterprise security, governance, accessibility, and recovery","status":"planned","dependencies":["commercial-24","connectors-21","publishing-18"],"documents":["docs/05-security/threat-model.md","docs/05-security/data-governance.md"],"deliverable":"SSO, SCIM, residency, provider governance, abuse controls, WCAG, internationalization, and disaster recovery."},
-    {"id":"conformance-26","order":26,"title":"Product-readiness and launch conformance","status":"planned","dependencies":["enterprise-25","studio-19","github-20","memory-23"],"documents":["docs/06-delivery/implementation-plan.md","docs/06-delivery/implementation-status.md"],"deliverable":"End-to-end quality, security, recovery, cost, support, accessibility, and product-truth gates."}
+    {
+      "id": "foundation-01",
+      "order": 1,
+      "title": "Monorepo and quality foundation",
+      "status": "ready",
+      "dependencies": [],
+      "documents": [
+        "AGENTS.md",
+        "docs/START-HERE.md",
+        "ARCHITECTURE.md",
+        "docs/00-foundation/user-opinion-and-competitive-signal-audit.md",
+        "docs/00-foundation/ai-work-os-and-agent-automation-signal-audit.md",
+        "docs/00-foundation/advanced-operating-layer-differentiation.md",
+        "docs/00-foundation/advanced-feature-opportunity-register.md",
+        "docs/08-build/README.md",
+        "docs/08-build/foundation-runtime-scaffold.md",
+        "docs/08-build/open-source-tooling-landscape.md",
+        "docs/08-build/ui-system-and-chatgpt-patterns.md",
+        "docs/_meta/tooling-catalog.json",
+        "docs/06-delivery/documentation-governance-and-drift-control.md",
+        "docs/06-delivery/documentation-quality-and-authoring-standard.md",
+        "docs/06-delivery/semantic-drift-and-contradiction-review.md",
+        "docs/06-delivery/documentation-change-evidence-log.md",
+        "docs/06-delivery/external-signal-refresh-and-competitive-watch.md",
+        "docs/06-delivery/frontier-feature-watch-and-novelty-control.md",
+        "docs/06-delivery/specification-signal-decision-ledger.md",
+        "docs/06-delivery/user-research-segment-and-screener-matrix.md",
+        "docs/06-delivery/user-opinion-research-coverage-matrix.md",
+        "docs/06-delivery/user-opinion-coding-and-synthesis-ledger.md",
+        "docs/06-delivery/human-ai-interaction-and-automation-ux-review.md",
+        "docs/06-delivery/product-outcome-metrics-and-strategic-bet-scorecard.md",
+        "docs/06-delivery/telemetry-and-experience-instrumentation-matrix.md",
+        "docs/06-delivery/automation-failure-recovery-and-learning-loop.md",
+        "docs/06-delivery/customer-facing-claim-and-evidence-boundary-matrix.md",
+        "docs/06-delivery/research-experience-benchmark-suite.md",
+        "docs/06-delivery/advanced-differentiation-benchmark-matrix.md",
+        "docs/06-delivery/advanced-feature-incubation-and-prototype-governance.md",
+        "docs/06-delivery/public-signal-source-quality-and-citation-policy.md",
+        "docs/06-delivery/implementation-decision-records-and-open-decisions.md",
+        "docs/06-delivery/developer-environment-and-bootstrap.md",
+        "docs/06-delivery/test-strategy-and-quality-gates.md",
+        "docs/07-reference/definition-of-done.md",
+        "docs/07-reference/terminology.md",
+        "docs/07-reference/requirements-traceability-matrix.md",
+        "docs/05-security/secure-software-supply-chain.md"
+      ],
+      "deliverable": "pnpm/Turborepo workspace with TanStack Start, Hono, strict TypeScript, tests, architecture checks, and CI."
+    },
+    {
+      "id": "identity-02",
+      "order": 2,
+      "title": "Identity, organizations, Projects, and authorization",
+      "status": "planned",
+      "dependencies": [
+        "foundation-01"
+      ],
+      "documents": [
+        "docs/01-product/project-workspace.md",
+        "docs/01-product/project-settings-and-administration.md",
+        "docs/02-architecture/domain-model.md",
+        "docs/05-security/threat-model.md",
+        "docs/02-architecture/tenancy-authorization-and-capabilities.md",
+        "docs/02-architecture/data-retention-deletion-and-portability.md"
+      ],
+      "deliverable": "Authenticated organizations, memberships, Projects, and policy enforcement."
+    },
+    {
+      "id": "persistence-03",
+      "order": 3,
+      "title": "Persistence, audit, and outbox",
+      "status": "planned",
+      "dependencies": [
+        "identity-02"
+      ],
+      "documents": [
+        "docs/02-architecture/domain-model.md",
+        "docs/02-architecture/system-architecture.md",
+        "docs/02-architecture/durable-workflows-idempotency-and-outbox.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/02-architecture/reversal-ledger-and-compensation-engine.md",
+        "docs/02-architecture/schema-contract-and-data-evolution.md",
+        "docs/07-reference/database-schema-blueprint.md"
+      ],
+      "deliverable": "Postgres schema, migrations, Blob integration, audit log, transactional outbox, side-effect ledger, and reversal ledger foundations."
+    },
+    {
+      "id": "workspace-04",
+      "order": 4,
+      "title": "Project workspace shell",
+      "status": "planned",
+      "dependencies": [
+        "identity-02"
+      ],
+      "documents": [
+        "docs/01-product/project-workspace.md",
+        "docs/01-product/spatial-workbench-and-worksets.md",
+        "docs/01-product/chat.md",
+        "docs/01-product/documents-and-canvas.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/01-product/command-center-and-keyboard-workflows.md",
+        "docs/01-product/focus-continuity-and-work-resume.md",
+        "docs/01-product/offline-device-continuity-and-mobile-experience.md",
+        "docs/01-product/native-workspace-companion-and-os-integration.md",
+        "docs/01-product/adaptive-personalization-and-preference-controls.md",
+        "docs/01-product/project-operating-layer-and-work-control.md",
+        "docs/01-product/project-health-and-repair.md",
+        "docs/01-product/scenario-lab-and-change-simulation.md",
+        "docs/01-product/reversible-work-and-project-history.md",
+        "docs/01-product/delegated-trust-and-approval-load.md",
+        "docs/01-product/sources.md",
+        "docs/01-product/project-settings-and-administration.md",
+        "docs/01-product/automation-ux-and-performance-principles.md",
+        "docs/01-product/composable-automation-recipes-and-playbooks.md",
+        "docs/01-product/automation-registry-and-run-debugger.md",
+        "docs/01-product/latency-aware-progressive-workflows.md",
+        "docs/01-product/project-atlas-and-impact-navigator.md",
+        "docs/01-product/intent-capture-and-prompt-friction.md",
+        "docs/01-product/activity-timeline-and-review-queue.md",
+        "docs/02-architecture/command-action-routing-and-shortcuts.md",
+        "docs/02-architecture/spatial-workbench-layout-and-worksets.md",
+        "docs/02-architecture/automation-recipe-graph-and-execution-policy.md",
+        "docs/02-architecture/focus-state-and-resume-digests.md",
+        "docs/02-architecture/offline-sync-local-cache-and-device-policy.md",
+        "docs/02-architecture/native-companion-shell-and-os-adapter-policy.md",
+        "docs/02-architecture/adaptive-preference-learning-and-interface-policy.md",
+        "docs/02-architecture/project-operating-layer-control-plane.md",
+        "docs/02-architecture/project-health-diagnostics-and-repair.md",
+        "docs/02-architecture/scenario-simulation-engine.md",
+        "docs/02-architecture/reversal-ledger-and-compensation-engine.md",
+        "docs/02-architecture/delegated-trust-policy-and-approval-engine.md",
+        "docs/02-architecture/progressive-delivery-and-fast-path-cache-policy.md",
+        "docs/02-architecture/project-map-and-impact-analysis.md",
+        "docs/02-architecture/accessibility-internationalization-and-locale-policy.md",
+        "docs/08-build/ui-system-and-chatgpt-patterns.md",
+        "docs/01-product/trust-dashboard-and-evidence-coverage.md",
+        "docs/01-product/accessibility-internationalization-and-inclusive-research.md"
+      ],
+      "deliverable": "Responsive Chat/Documents/Sources shell with Spatial Workbench, Worksets, command center, Project Operating Layer, Work Packets, Project Health Console, Scenario Lab entry points, Reversible Work and Project History entry points, delegated-trust controls, Project Atlas, device capability labels, offline-aware draft and reconnect status, native companion entry points and grant states, adaptive preference controls, keyboard workflows, accessible navigation, and locale-aware shell foundations."
+    },
+    {
+      "id": "uploads-05",
+      "order": 5,
+      "title": "Uploads and immutable sources",
+      "status": "planned",
+      "dependencies": [
+        "persistence-03",
+        "workspace-04"
+      ],
+      "documents": [
+        "docs/01-product/sources.md",
+        "docs/04-sources/ingestion-pipeline.md",
+        "docs/04-sources/source-capability-and-format-matrix.md"
+      ],
+      "deliverable": "Resumable PDF upload, Source, SourceVersion, Blob object, permissions, and status UI."
+    },
+    {
+      "id": "parsing-06",
+      "order": 6,
+      "title": "PDF parsing and evidence viewer",
+      "status": "planned",
+      "dependencies": [
+        "uploads-05"
+      ],
+      "documents": [
+        "docs/04-sources/ingestion-pipeline.md",
+        "docs/03-ai/claims-evidence-citations.md",
+        "docs/04-sources/source-capability-and-format-matrix.md"
+      ],
+      "deliverable": "Normalized PDF elements, exact page locators, and source viewer."
+    },
+    {
+      "id": "indexing-07",
+      "order": 7,
+      "title": "Hybrid indexing and retrieval",
+      "status": "planned",
+      "dependencies": [
+        "parsing-06"
+      ],
+      "documents": [
+        "docs/04-sources/indexing-and-retrieval.md",
+        "docs/05-security/threat-model.md",
+        "docs/04-sources/source-capability-and-format-matrix.md"
+      ],
+      "deliverable": "Permission-filtered lexical, vector, metadata retrieval and evaluation fixtures."
+    },
+    {
+      "id": "chat-08",
+      "order": 8,
+      "title": "Persistent streaming Chat",
+      "status": "planned",
+      "dependencies": [
+        "workspace-04",
+        "persistence-03"
+      ],
+      "documents": [
+        "docs/01-product/chat.md",
+        "docs/02-architecture/system-architecture.md",
+        "docs/03-ai/model-routing-evaluation-and-cost-control.md",
+        "docs/01-product/intent-capture-and-prompt-friction.md",
+        "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+        "docs/01-product/latency-aware-progressive-workflows.md",
+        "docs/02-architecture/progressive-delivery-and-fast-path-cache-policy.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md"
+      ],
+      "deliverable": "Persistent AI SDK chat, model registry, attachments, tool events, and resumable streams."
+    },
+    {
+      "id": "grounding-09",
+      "order": 9,
+      "title": "Claims, evidence, and exact citations",
+      "status": "planned",
+      "dependencies": [
+        "indexing-07",
+        "chat-08"
+      ],
+      "documents": [
+        "docs/03-ai/claims-evidence-citations.md",
+        "docs/04-sources/indexing-and-retrieval.md",
+        "docs/03-ai/model-evaluation-and-change-management.md",
+        "docs/01-product/trust-dashboard-and-evidence-coverage.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "Grounded responses, EvidenceSpans, Claims, exact citations, and verification."
+    },
+    {
+      "id": "documents-10",
+      "order": 10,
+      "title": "Canonical Markdown document system",
+      "status": "planned",
+      "dependencies": [
+        "workspace-04",
+        "persistence-03"
+      ],
+      "documents": [
+        "docs/01-product/documents-and-canvas.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/02-architecture/canonical-content-and-no-drift.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/01-product/trust-dashboard-and-evidence-coverage.md"
+      ],
+      "deliverable": "Document tree, stable blocks, revisions, Plate canvas, CodeMirror, and typed patches."
+    },
+    {
+      "id": "vertical-11",
+      "order": 11,
+      "title": "Grounded PDF-to-document vertical slice",
+      "status": "planned",
+      "dependencies": [
+        "grounding-09",
+        "documents-10"
+      ],
+      "documents": [
+        "docs/06-delivery/implementation-plan.md"
+      ],
+      "deliverable": "Create Project through persisted cited Markdown document."
+    },
+    {
+      "id": "web-12",
+      "order": 12,
+      "title": "Web discovery and capture",
+      "status": "planned",
+      "dependencies": [
+        "vertical-11"
+      ],
+      "documents": [
+        "docs/01-product/sources.md",
+        "docs/04-sources/ingestion-pipeline.md",
+        "docs/04-sources/web-acquisition-search-and-citation.md",
+        "docs/04-sources/source-capability-and-format-matrix.md"
+      ],
+      "deliverable": "Search, candidate review, HTTP-first capture, Playwright escalation, and immutable snapshots."
+    },
+    {
+      "id": "research-13",
+      "order": 13,
+      "title": "Research contracts and durable runs",
+      "status": "planned",
+      "dependencies": [
+        "vertical-11",
+        "web-12"
+      ],
+      "documents": [
+        "docs/03-ai/research-orchestrator.md",
+        "docs/02-architecture/durable-workflows-idempotency-and-outbox.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/01-product/latency-aware-progressive-workflows.md",
+        "docs/02-architecture/progressive-delivery-and-fast-path-cache-policy.md",
+        "docs/01-product/activity-timeline-and-review-queue.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/01-product/intent-capture-and-prompt-friction.md",
+        "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+        "docs/03-ai/model-routing-evaluation-and-cost-control.md",
+        "docs/03-ai/model-evaluation-and-change-management.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "Editable plans, Research Runs, progress, interruption, retries, budgets, and approvals."
+    },
+    {
+      "id": "engines-14",
+      "order": 14,
+      "title": "Research engine adapters",
+      "status": "planned",
+      "dependencies": [
+        "research-13"
+      ],
+      "documents": [
+        "docs/03-ai/research-orchestrator.md",
+        "docs/03-ai/research-engine-adapters.md",
+        "docs/03-ai/research-engine-fabric.md",
+        "docs/07-reference/official-references.md",
+        "docs/03-ai/model-routing-evaluation-and-cost-control.md",
+        "docs/03-ai/model-evaluation-and-change-management.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "Provider-neutral OpenAI, Gemini, Tavily, Perplexity, and isolated open-source adapters."
+    },
+    {
+      "id": "agents-15",
+      "order": 15,
+      "title": "Bounded multi-agent control plane",
+      "status": "planned",
+      "dependencies": [
+        "research-13"
+      ],
+      "documents": [
+        "docs/03-ai/multi-agent-orchestration.md",
+        "docs/03-ai/multi-agent-research-control-plane.md",
+        "docs/03-ai/research-engine-fabric.md",
+        "docs/02-architecture/agent-development-lifecycle-and-automation-governance.md",
+        "docs/01-product/composable-automation-recipes-and-playbooks.md",
+        "docs/02-architecture/automation-recipe-graph-and-execution-policy.md",
+        "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/03-ai/model-evaluation-and-change-management.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "Typed task packets, specialist workers, coordinator, budgets, cancellation, and integration."
+    },
+    {
+      "id": "longform-16",
+      "order": 16,
+      "title": "Long-form document production",
+      "status": "planned",
+      "dependencies": [
+        "engines-14",
+        "agents-15",
+        "grounding-09",
+        "documents-10"
+      ],
+      "documents": [
+        "docs/03-ai/research-orchestrator.md",
+        "docs/03-ai/claims-evidence-citations.md",
+        "docs/03-ai/research-engine-fabric.md",
+        "docs/08-build/deep-research-and-long-form-generation.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "Section contracts, global consistency ledger, assembly, editorial and citation audits."
+    },
+    {
+      "id": "maintenance-17",
+      "order": 17,
+      "title": "Living knowledge maintenance",
+      "status": "planned",
+      "dependencies": [
+        "longform-16"
+      ],
+      "documents": [
+        "docs/01-product/source-change-maintenance-and-living-docs.md",
+        "docs/02-architecture/canonical-content-and-no-drift.md",
+        "docs/02-architecture/continuous-knowledge-maintenance.md",
+        "docs/02-architecture/living-dependency-graph.md",
+        "docs/02-architecture/project-map-and-impact-analysis.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/01-product/trust-dashboard-and-evidence-coverage.md",
+        "docs/01-product/project-atlas-and-impact-navigator.md",
+        "docs/01-product/activity-timeline-and-review-queue.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "User-visible maintenance runs, source diffs, claim revalidation, dependency traversal, publication blockers, reviewable ActionCards, and minimal safe typed patches."
+    },
+    {
+      "id": "publishing-18",
+      "order": 18,
+      "title": "Public and private publishing",
+      "status": "planned",
+      "dependencies": [
+        "documents-10",
+        "grounding-09",
+        "maintenance-17"
+      ],
+      "documents": [
+        "docs/01-product/public-private-publishing.md",
+        "docs/01-product/activity-timeline-and-review-queue.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/05-security/content-rights-ai-governance-and-data-residency.md",
+        "docs/02-architecture/data-retention-deletion-and-portability.md",
+        "docs/05-security/privacy-and-compliance-operations.md",
+        "docs/01-product/trust-dashboard-and-evidence-coverage.md",
+        "docs/01-product/project-atlas-and-impact-navigator.md",
+        "docs/02-architecture/project-map-and-impact-analysis.md"
+      ],
+      "deliverable": "Projection policies, privacy and rights audits, immutable PublicationSnapshots, and withdrawal."
+    },
+    {
+      "id": "studio-19",
+      "order": 19,
+      "title": "Research Studio artifacts",
+      "status": "planned",
+      "dependencies": [
+        "longform-16",
+        "documents-10"
+      ],
+      "documents": [
+        "docs/01-product/research-studio.md",
+        "docs/08-build/research-studio-and-canvas-tooling.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/01-product/trust-dashboard-and-evidence-coverage.md"
+      ],
+      "deliverable": "Typed artifact system, canvases, charts, evidence graphs, media, study, and export adapters."
+    },
+    {
+      "id": "github-20",
+      "order": 20,
+      "title": "GitHub source and contribution platform",
+      "status": "planned",
+      "dependencies": [
+        "vertical-11",
+        "agents-15"
+      ],
+      "documents": [
+        "docs/04-sources/github-integration.md",
+        "docs/05-security/threat-model.md",
+        "docs/08-build/github-integration-and-repository-editing.md"
+      ],
+      "deliverable": "GitHub App, commit-pinned indexing, sandboxed patches, validation, and draft pull requests."
+    },
+    {
+      "id": "connectors-21",
+      "order": 21,
+      "title": "Connector platform",
+      "status": "planned",
+      "dependencies": [
+        "web-12",
+        "persistence-03"
+      ],
+      "documents": [
+        "docs/01-product/sources.md",
+        "docs/05-security/data-governance.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md"
+      ],
+      "deliverable": "Google Workspace, MCP, connector SDK, synchronization, revocation, and additional source families."
+    },
+    {
+      "id": "platform-22",
+      "order": 22,
+      "title": "Developer platform API",
+      "status": "planned",
+      "dependencies": [
+        "research-13",
+        "documents-10",
+        "uploads-05"
+      ],
+      "documents": [
+        "docs/02-architecture/developer-platform-api.md",
+        "docs/08-build/developer-platform-api-sdk.md",
+        "docs/07-reference/api-error-operation-and-pagination-contract.md",
+        "docs/07-reference/event-webhook-and-idempotency-contract.md",
+        "docs/01-product/latency-aware-progressive-workflows.md",
+        "docs/02-architecture/progressive-delivery-and-fast-path-cache-policy.md",
+        "docs/02-architecture/project-map-and-impact-analysis.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/02-architecture/command-action-routing-and-shortcuts.md",
+        "docs/01-product/native-workspace-companion-and-os-integration.md",
+        "docs/02-architecture/native-companion-shell-and-os-adapter-policy.md",
+        "docs/02-architecture/spatial-workbench-layout-and-worksets.md",
+        "docs/02-architecture/project-operating-layer-control-plane.md",
+        "docs/02-architecture/project-health-diagnostics-and-repair.md",
+        "docs/02-architecture/scenario-simulation-engine.md",
+        "docs/02-architecture/reversal-ledger-and-compensation-engine.md",
+        "docs/02-architecture/delegated-trust-policy-and-approval-engine.md",
+        "docs/01-product/project-atlas-and-impact-navigator.md",
+        "docs/01-product/project-operating-layer-and-work-control.md",
+        "docs/01-product/project-health-and-repair.md",
+        "docs/01-product/scenario-lab-and-change-simulation.md",
+        "docs/01-product/reversible-work-and-project-history.md",
+        "docs/01-product/spatial-workbench-and-worksets.md",
+        "docs/01-product/delegated-trust-and-approval-load.md",
+        "docs/01-product/composable-automation-recipes-and-playbooks.md",
+        "docs/01-product/automation-registry-and-run-debugger.md",
+        "docs/02-architecture/automation-outcome-evaluation-and-adaptive-routing.md",
+        "docs/02-architecture/automation-recipe-graph-and-execution-policy.md",
+        "docs/02-architecture/adaptive-preference-learning-and-interface-policy.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md"
+      ],
+      "deliverable": "OpenAPI, Operations, SSE, webhooks, SDKs, CLI, MCP, command catalog discovery, Spatial Workbench and Workset resources, native companion install/grant/capture/deep-link resources, Work Packet and next-action resources, Project Health and repair resources, Scenario Lab and simulation resources, Reversible Work and Project History resources, approval and delegated-trust resources, Project Atlas resources, preference and adaptive interface resources, automation recipe resources, and automation outcome resources."
+    },
+    {
+      "id": "memory-23",
+      "order": 23,
+      "title": "Inspectable Project memory",
+      "status": "planned",
+      "dependencies": [
+        "grounding-09",
+        "documents-10"
+      ],
+      "documents": [
+        "docs/03-ai/project-memory.md",
+        "docs/02-architecture/adaptive-preference-learning-and-interface-policy.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md"
+      ],
+      "deliverable": "Versioned memory, decisions, conflicts, user controls, preference and memory boundary enforcement, consolidation, and forgetting."
+    },
+    {
+      "id": "commercial-24",
+      "order": 24,
+      "title": "Commercial and customer operations",
+      "status": "planned",
+      "dependencies": [
+        "platform-22"
+      ],
+      "documents": [
+        "PRODUCT.md",
+        "ROADMAP.md",
+        "docs/00-foundation/user-opinion-and-competitive-signal-audit.md",
+        "docs/00-foundation/ai-work-os-and-agent-automation-signal-audit.md",
+        "docs/00-foundation/advanced-operating-layer-differentiation.md",
+        "docs/00-foundation/advanced-feature-opportunity-register.md",
+        "docs/01-product/onboarding-activation-and-imports.md",
+        "docs/01-product/project-settings-and-administration.md",
+        "docs/01-product/notifications-and-scheduled-automation.md",
+        "docs/01-product/project-operating-layer-and-work-control.md",
+        "docs/01-product/project-health-and-repair.md",
+        "docs/01-product/scenario-lab-and-change-simulation.md",
+        "docs/01-product/reversible-work-and-project-history.md",
+        "docs/01-product/spatial-workbench-and-worksets.md",
+        "docs/01-product/offline-device-continuity-and-mobile-experience.md",
+        "docs/01-product/native-workspace-companion-and-os-integration.md",
+        "docs/01-product/adaptive-personalization-and-preference-controls.md",
+        "docs/01-product/delegated-trust-and-approval-load.md",
+        "docs/01-product/automation-ux-and-performance-principles.md",
+        "docs/01-product/latency-aware-progressive-workflows.md",
+        "docs/01-product/automation-outcome-scorecard-and-adaptive-workflows.md",
+        "docs/01-product/composable-automation-recipes-and-playbooks.md",
+        "docs/01-product/automation-registry-and-run-debugger.md",
+        "docs/01-product/intent-capture-and-prompt-friction.md",
+        "docs/01-product/activity-timeline-and-review-queue.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/01-product/product-truth-board-and-contradiction-radar.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/02-architecture/project-operating-layer-control-plane.md",
+        "docs/02-architecture/project-health-diagnostics-and-repair.md",
+        "docs/02-architecture/scenario-simulation-engine.md",
+        "docs/02-architecture/reversal-ledger-and-compensation-engine.md",
+        "docs/02-architecture/spatial-workbench-layout-and-worksets.md",
+        "docs/02-architecture/offline-sync-local-cache-and-device-policy.md",
+        "docs/02-architecture/native-companion-shell-and-os-adapter-policy.md",
+        "docs/02-architecture/adaptive-preference-learning-and-interface-policy.md",
+        "docs/02-architecture/delegated-trust-policy-and-approval-engine.md",
+        "docs/02-architecture/agent-development-lifecycle-and-automation-governance.md",
+        "docs/02-architecture/automation-outcome-evaluation-and-adaptive-routing.md",
+        "docs/02-architecture/automation-recipe-graph-and-execution-policy.md",
+        "docs/02-architecture/progressive-delivery-and-fast-path-cache-policy.md",
+        "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/02-architecture/entitlements-metering-and-billing.md",
+        "docs/02-architecture/product-analytics-feedback-and-experimentation.md",
+        "docs/02-architecture/product-truth-graph-and-contradiction-detection.md",
+        "docs/05-security/data-governance.md",
+        "docs/06-delivery/continuous-discovery-and-user-feedback-operations.md",
+        "docs/06-delivery/user-research-and-experience-validation.md",
+        "docs/06-delivery/user-research-segment-and-screener-matrix.md",
+        "docs/06-delivery/user-opinion-research-coverage-matrix.md",
+        "docs/06-delivery/user-opinion-coding-and-synthesis-ledger.md",
+        "docs/06-delivery/human-ai-interaction-and-automation-ux-review.md",
+        "docs/06-delivery/product-outcome-metrics-and-strategic-bet-scorecard.md",
+        "docs/06-delivery/telemetry-and-experience-instrumentation-matrix.md",
+        "docs/06-delivery/automation-failure-recovery-and-learning-loop.md",
+        "docs/06-delivery/customer-facing-claim-and-evidence-boundary-matrix.md",
+        "docs/06-delivery/research-experience-benchmark-suite.md",
+        "docs/06-delivery/advanced-differentiation-benchmark-matrix.md",
+        "docs/06-delivery/advanced-feature-incubation-and-prototype-governance.md",
+        "docs/06-delivery/public-signal-source-quality-and-citation-policy.md",
+        "docs/06-delivery/external-signal-refresh-and-competitive-watch.md",
+        "docs/06-delivery/frontier-feature-watch-and-novelty-control.md",
+        "docs/06-delivery/specification-signal-decision-ledger.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "Onboarding, imports, portability, entitlements, usage, billing, notifications, device continuity controls, offline draft and queue visibility, native companion grant and notification controls where companion surfaces ship, adaptive preference controls, Spatial Workbench usability controls, Project Operating Layer work control, Project Health causal diagnostics and safe repair playbooks, Scenario Lab comparison and simulation evidence, Reversible Work recovery evidence, delegated-trust approval load controls, analytics, automation recipes, outcome scorecards, feedback operations, and customer-visible support diagnostics."
+    },
+    {
+      "id": "enterprise-25",
+      "order": 25,
+      "title": "Enterprise security, governance, accessibility, and recovery",
+      "status": "planned",
+      "dependencies": [
+        "commercial-24",
+        "connectors-21",
+        "publishing-18"
+      ],
+      "documents": [
+        "docs/05-security/threat-model.md",
+        "docs/05-security/data-governance.md",
+        "docs/05-security/content-rights-ai-governance-and-data-residency.md",
+        "docs/05-security/privacy-and-compliance-operations.md",
+        "docs/05-security/security-verification-matrix.md",
+        "docs/05-security/web-application-security-baseline.md",
+        "docs/05-security/secrets-encryption-and-configuration.md",
+        "docs/05-security/secure-software-supply-chain.md",
+        "docs/06-delivery/telemetry-and-experience-instrumentation-matrix.md",
+        "docs/06-delivery/automation-failure-recovery-and-learning-loop.md",
+        "docs/06-delivery/customer-facing-claim-and-evidence-boundary-matrix.md",
+        "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+        "docs/02-architecture/delegated-trust-policy-and-approval-engine.md",
+        "docs/02-architecture/reversal-ledger-and-compensation-engine.md",
+        "docs/01-product/reversible-work-and-project-history.md",
+        "docs/01-product/delegated-trust-and-approval-load.md",
+        "docs/01-product/project-settings-and-administration.md",
+        "docs/01-product/offline-device-continuity-and-mobile-experience.md",
+        "docs/01-product/native-workspace-companion-and-os-integration.md",
+        "docs/01-product/adaptive-personalization-and-preference-controls.md",
+        "docs/01-product/accessibility-internationalization-and-inclusive-research.md",
+        "docs/01-product/abuse-prevention-and-trust-safety.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/02-architecture/accessibility-internationalization-and-locale-policy.md",
+        "docs/02-architecture/offline-sync-local-cache-and-device-policy.md",
+        "docs/02-architecture/native-companion-shell-and-os-adapter-policy.md",
+        "docs/02-architecture/adaptive-preference-learning-and-interface-policy.md",
+        "docs/02-architecture/abuse-prevention-policy-and-enforcement.md",
+        "docs/06-delivery/backup-restore-and-disaster-recovery.md",
+        "docs/06-delivery/observability-and-incident-operations.md",
+        "docs/06-delivery/service-ownership-and-runbooks.md",
+        "docs/06-delivery/runbook-catalog-and-operational-drills.md",
+        "docs/06-delivery/environment-and-deployment-topology.md",
+        "docs/06-delivery/release-engineering-and-change-control.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md"
+      ],
+      "deliverable": "SSO, SCIM, residency, provider governance, delegated-trust enforcement, Reversible Work compensation and reconciliation enforcement, policy-bound local cache and sync controls, native companion no-ambient-capture and signed-update controls where companion surfaces ship, policy-bound preference learning controls, abuse controls, review queues, appeals, false-positive measurement, content-minimized trust-safety telemetry, WCAG 2.2 AA journeys, language and direction metadata, locale-neutral APIs, accessible exports, internationalization, and disaster recovery."
+    },
+    {
+      "id": "conformance-26",
+      "order": 26,
+      "title": "Product-readiness and launch conformance",
+      "status": "planned",
+      "dependencies": [
+        "enterprise-25",
+        "studio-19",
+        "github-20",
+        "memory-23"
+      ],
+      "documents": [
+        "docs/00-foundation/user-opinion-and-competitive-signal-audit.md",
+        "docs/00-foundation/ai-work-os-and-agent-automation-signal-audit.md",
+        "docs/00-foundation/advanced-operating-layer-differentiation.md",
+        "docs/00-foundation/advanced-feature-opportunity-register.md",
+        "docs/01-product/command-center-and-keyboard-workflows.md",
+        "docs/01-product/automation-ux-and-performance-principles.md",
+        "docs/01-product/automation-outcome-scorecard-and-adaptive-workflows.md",
+        "docs/01-product/composable-automation-recipes-and-playbooks.md",
+        "docs/01-product/automation-registry-and-run-debugger.md",
+        "docs/01-product/intent-capture-and-prompt-friction.md",
+        "docs/01-product/project-settings-and-administration.md",
+        "docs/01-product/collaboration-review-and-decision-workflows.md",
+        "docs/01-product/product-truth-board-and-contradiction-radar.md",
+        "docs/01-product/focus-continuity-and-work-resume.md",
+        "docs/01-product/offline-device-continuity-and-mobile-experience.md",
+        "docs/01-product/native-workspace-companion-and-os-integration.md",
+        "docs/01-product/adaptive-personalization-and-preference-controls.md",
+        "docs/01-product/project-operating-layer-and-work-control.md",
+        "docs/01-product/project-health-and-repair.md",
+        "docs/01-product/scenario-lab-and-change-simulation.md",
+        "docs/01-product/reversible-work-and-project-history.md",
+        "docs/01-product/spatial-workbench-and-worksets.md",
+        "docs/01-product/delegated-trust-and-approval-load.md",
+        "docs/01-product/latency-aware-progressive-workflows.md",
+        "docs/01-product/project-atlas-and-impact-navigator.md",
+        "docs/01-product/accessibility-internationalization-and-inclusive-research.md",
+        "docs/01-product/abuse-prevention-and-trust-safety.md",
+        "docs/02-architecture/collaboration-comments-and-decisions.md",
+        "docs/02-architecture/product-truth-graph-and-contradiction-detection.md",
+        "docs/02-architecture/command-action-routing-and-shortcuts.md",
+        "docs/02-architecture/focus-state-and-resume-digests.md",
+        "docs/02-architecture/offline-sync-local-cache-and-device-policy.md",
+        "docs/02-architecture/native-companion-shell-and-os-adapter-policy.md",
+        "docs/02-architecture/adaptive-preference-learning-and-interface-policy.md",
+        "docs/02-architecture/project-operating-layer-control-plane.md",
+        "docs/02-architecture/project-health-diagnostics-and-repair.md",
+        "docs/02-architecture/scenario-simulation-engine.md",
+        "docs/02-architecture/reversal-ledger-and-compensation-engine.md",
+        "docs/02-architecture/spatial-workbench-layout-and-worksets.md",
+        "docs/02-architecture/delegated-trust-policy-and-approval-engine.md",
+        "docs/02-architecture/progressive-delivery-and-fast-path-cache-policy.md",
+        "docs/02-architecture/project-map-and-impact-analysis.md",
+        "docs/02-architecture/accessibility-internationalization-and-locale-policy.md",
+        "docs/02-architecture/abuse-prevention-policy-and-enforcement.md",
+        "docs/02-architecture/agent-development-lifecycle-and-automation-governance.md",
+        "docs/02-architecture/automation-outcome-evaluation-and-adaptive-routing.md",
+        "docs/02-architecture/automation-recipe-graph-and-execution-policy.md",
+        "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+        "docs/01-product/activity-timeline-and-review-queue.md",
+        "docs/02-architecture/activity-event-log-and-replay.md",
+        "docs/06-delivery/implementation-plan.md",
+        "docs/06-delivery/implementation-status.md",
+        "docs/06-delivery/documentation-governance-and-drift-control.md",
+        "docs/06-delivery/documentation-quality-and-authoring-standard.md",
+        "docs/06-delivery/semantic-drift-and-contradiction-review.md",
+        "docs/06-delivery/documentation-change-evidence-log.md",
+        "docs/06-delivery/implementation-decision-records-and-open-decisions.md",
+        "docs/06-delivery/product-readiness-gap-audit.md",
+        "docs/06-delivery/launch-readiness-and-release-evidence.md",
+        "docs/06-delivery/continuous-discovery-and-user-feedback-operations.md",
+        "docs/06-delivery/user-research-and-experience-validation.md",
+        "docs/06-delivery/user-research-segment-and-screener-matrix.md",
+        "docs/06-delivery/user-opinion-research-coverage-matrix.md",
+        "docs/06-delivery/user-opinion-coding-and-synthesis-ledger.md",
+        "docs/06-delivery/human-ai-interaction-and-automation-ux-review.md",
+        "docs/06-delivery/product-outcome-metrics-and-strategic-bet-scorecard.md",
+        "docs/06-delivery/telemetry-and-experience-instrumentation-matrix.md",
+        "docs/06-delivery/automation-failure-recovery-and-learning-loop.md",
+        "docs/06-delivery/customer-facing-claim-and-evidence-boundary-matrix.md",
+        "docs/06-delivery/research-experience-benchmark-suite.md",
+        "docs/06-delivery/advanced-differentiation-benchmark-matrix.md",
+        "docs/06-delivery/advanced-feature-incubation-and-prototype-governance.md",
+        "docs/06-delivery/public-signal-source-quality-and-citation-policy.md",
+        "docs/06-delivery/external-signal-refresh-and-competitive-watch.md",
+        "docs/06-delivery/frontier-feature-watch-and-novelty-control.md",
+        "docs/06-delivery/specification-signal-decision-ledger.md",
+        "docs/06-delivery/release-engineering-and-change-control.md",
+        "docs/06-delivery/test-strategy-and-quality-gates.md",
+        "docs/06-delivery/testing-and-validation-strategy.md",
+        "docs/06-delivery/performance-capacity-and-load-engineering.md",
+        "docs/06-delivery/observability-and-incident-operations.md",
+        "docs/06-delivery/service-ownership-and-runbooks.md",
+        "docs/06-delivery/runbook-catalog-and-operational-drills.md",
+        "docs/06-delivery/backup-restore-and-disaster-recovery.md",
+        "docs/06-delivery/data-migration-and-backfill-runbook.md",
+        "docs/07-reference/definition-of-done.md",
+        "docs/07-reference/terminology.md",
+        "docs/07-reference/requirements-traceability-matrix.md",
+        "docs/01-product/trust-dashboard-and-evidence-coverage.md",
+        "docs/02-architecture/context-packs-and-agent-handoff.md",
+        "docs/03-ai/model-council-and-disagreement-resolution.md"
+      ],
+      "deliverable": "End-to-end quality, security, recovery, cost, support, accessibility, internationalization, accessible export, abuse-prevention, review, appeal, false-positive, command-center safety, device continuity and local-cache gates, native companion no-ambient-capture gates where companion surfaces ship, adaptive preference learning gates, Spatial Workbench and Workset gates, Project Operating Layer work-control gates, Project Health causal diagnostics and safe repair gates, Scenario Lab and simulation stale-plan gates, Reversible Work restore, compensation, reconciliation, and irreversible-label gates, delegated-trust and approval-load gates, Project Atlas impact gates, continuous-discovery, user-research and experience-validation, human-AI interaction and automation UX review, product-truth, automation recipe, and adaptive automation outcome gates."
+    }
   ]
 }

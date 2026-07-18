@@ -11,7 +11,7 @@ Source
 → EvidenceSpan
 → ClaimEvidence
 → Claim
-→ DocumentBlock / MemoryItem / ArtifactComponent
+→ DocumentBlock / MemoryItem / ArtifactComponent / DecisionRecord
 → DocumentRevision / ArtifactVersion
 → PublicationSnapshot / Export
 ```
@@ -24,6 +24,7 @@ Source
 - Editor state is a view; deterministic Markdown is the durable interchange form.
 - Memory records accepted knowledge and decisions with provenance; it does not replace evidence.
 - Artifacts reuse claims rather than copying unsupported prose.
+- Comments, suggestions, review requests, and decisions anchor to immutable resource versions and project forward with stale, orphaned, resolved, or superseded state.
 
 ## Change propagation
 
@@ -34,7 +35,7 @@ When an external object changes:
 3. Map previous locators where possible.
 4. Revalidate affected ClaimEvidence.
 5. Mark dependent claims supported, weakened, contradicted, stale, removed, or unresolved.
-6. Traverse dependent blocks, memory items, artifacts, and publications.
+6. Traverse dependent blocks, memory items, artifacts, comments, review requests, decision records, and publications.
 7. Generate the smallest safe typed patches.
 8. Show what changed, why, and which source caused it.
 9. Commit approved revisions.

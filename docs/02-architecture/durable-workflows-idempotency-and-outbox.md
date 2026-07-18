@@ -59,9 +59,11 @@ Each workflow has a stable type, schema version, compatibility policy, and step 
 
 ## Side-effect ledger
 
-External writes such as email, notification, publication, connector mutation, GitHub branch/commit/PR creation, billing settlement, and webhook delivery use a side-effect ledger keyed by Operation, step, target, and semantic effect. The ledger records requested, reserved, sent, acknowledged, reconciled, reversed, or permanently failed state.
+External writes such as email, notification, publication, connector mutation, GitHub branch/commit/PR creation, billing settlement, and webhook delivery use a side-effect ledger keyed by Operation, step, target, and semantic effect. The ledger records requested, reserved, sent, acknowledged, reconciled, reversed, compensated, superseded, irreversible, or permanently failed state.
 
 A step checks the ledger and external target before retrying an uncertain outcome. “The previous call timed out” is not proof that the effect did not happen.
+
+Side-effect rows feed the reversal ledger defined in [`reversal-ledger-and-compensation-engine.md`](reversal-ledger-and-compensation-engine.md). A workflow can declare that an effect supports direct reversal, withdrawal, compensation, reconciliation, or no recovery, but the owning mutation service still revalidates current state before any recovery action runs.
 
 ## Inbox and webhook processing
 
@@ -75,6 +77,8 @@ Progress is a persisted ordered event log, not only an in-memory stream. Clients
 
 The event log distinguishes user-visible progress from internal logs and model reasoning. Private source content and hidden reasoning are never required to resume a stream.
 
+Operation progress events feed the Project activity event spine defined in [`activity-event-log-and-replay.md`](activity-event-log-and-replay.md) and the Progressive Delivery envelopes defined in [`progressive-delivery-and-fast-path-cache-policy.md`](progressive-delivery-and-fast-path-cache-policy.md). Workflow logs, provider traces, and raw telemetry cannot substitute for activity events because they do not carry the same Project authorization, redaction, review, and replay semantics.
+
 ## Retries and failure classes
 
 - **Transient:** rate limit, timeout, temporary provider or network failure; exponential backoff with jitter and budget.
@@ -86,7 +90,7 @@ The event log distinguishes user-visible progress from internal logs and model r
 
 ## Cancellation
 
-Cancellation is a durable request. The workflow stops new work, attempts provider cancellation where supported, revokes unused capabilities, reconciles side effects, persists useful partial results, and reaches a terminal state. Cancellation cannot roll back immutable research already used by an approved document revision; later maintenance handles that dependency.
+Cancellation is a durable request. The workflow stops new work, attempts provider cancellation where supported, revokes unused capabilities, reconciles side effects, records recovery eligibility where applicable, persists useful Partial Results with explicit status, emits cancellation acknowledgement, and reaches a terminal state. Cancellation cannot roll back immutable research already used by an approved document revision; later maintenance or Reversible Work handles that dependency.
 
 ## Versioning
 
@@ -94,6 +98,6 @@ Workflow code changes follow `schema-contract-and-data-evolution.md`. In-flight 
 
 ## Verification
 
-Tests cover duplicate submits, worker crash after commit, dispatcher replay, provider timeout after success, out-of-order webhook, workflow deployment during execution, cancellation at every boundary, permission revocation, stale approval, exhausted budget, dead-letter replay, and reconciliation after regional recovery.
+Tests cover duplicate submits, worker crash after commit, dispatcher replay, provider timeout after success, out-of-order webhook, workflow deployment during execution, cancellation at every boundary, permission revocation, stale approval, exhausted budget, dead-letter replay, side-effect compensation, irreversible-effect labeling, reversal-ledger handoff, and reconciliation after regional recovery.
 
 Official implementation references include Vercel Workflow documentation and the application’s API Operation contract; provider-specific durability is never assumed to replace application-owned state.

@@ -8,6 +8,7 @@ Configuration is a typed, versioned input to a release. Feature flags control ex
 - **Environment configuration:** service endpoints, region, storage namespaces, queue names, public URLs, and provider policy.
 - **Secrets:** credentials and cryptographic material resolved from an approved secret manager.
 - **Tenant policy:** residency, retention, provider eligibility, connector rules, quotas, and publication restrictions.
+- **Companion policy:** desktop shell, browser extension, manifest permission, extension ID, native app ID, update channel, global shortcut, file-watch, notification, and emergency-revocation controls.
 - **Runtime tuning:** timeouts, concurrency, batch size, cache policy, and model-role routing within validated bounds.
 - **Feature flags:** reversible exposure decisions with owner and expiry.
 
@@ -48,6 +49,7 @@ Use a vendor-neutral application port, such as OpenFeature semantics, so product
 - A flag cannot make an incompatible schema or event change safe.
 - Durable workflows snapshot required flag decisions or explicitly re-evaluate at safe boundaries.
 - Model experiments cannot cross provider, residency, budget, or data-use policy.
+- Native companion and browser extension flags cannot disable companion authorization, grant prompts, no-ambient-capture restrictions, signed update checks, active-tab gesture requirements, file-watch path bounds, revocation, or support-safe redaction.
 - Public/private projection, deletion, retention, billing, and audit invariants remain enforced when a feature is disabled.
 - Kill switches default to the safest usable state and are tested before launch.
 

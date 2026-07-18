@@ -10,7 +10,7 @@ last_reviewed: 2026-07-17
 
 ## Purpose
 
-This contract translates the threat model into mandatory controls for the TanStack Start application, Hono API, public publications, uploads, streaming endpoints, webhooks, SDKs, and administrative surfaces. It complements AI/agent safety; it does not assume model guardrails protect ordinary web boundaries.
+This contract translates the threat model into mandatory controls for the TanStack Start application, Hono API, optional browser extension and native companion API surfaces, public publications, uploads, streaming endpoints, webhooks, SDKs, and administrative surfaces. It complements AI/agent safety; it does not assume model guardrails protect ordinary web boundaries.
 
 OWASP ASVS is the verification baseline, with stricter product-specific controls for multi-tenant research content, asynchronous operations, connector credentials, citations, and public/private projections.
 
@@ -80,6 +80,10 @@ Authenticated/private responses use explicit cache policy and vary on the correc
 
 Sensitive response compression is reviewed for cross-origin secrets. Browser storage excludes credentials and private source bodies except explicitly protected offline features.
 
+Service workers, Cache API entries, IndexedDB, OPFS, push subscriptions, background sync, installed-app state, and local queues follow [`../02-architecture/offline-sync-local-cache-and-device-policy.md`](../02-architecture/offline-sync-local-cache-and-device-policy.md). They must never store credentials, hidden reasoning, raw provider traces, support notes, private URLs, screenshots, clipboard contents, browser history, operating-system state, or prohibited private content classes. Reconnect paths reauthorize and preflight before local drafts, offline packets, queued actions, Workset refs, Focus refs, or cached projections are used.
+
+Browser extension and native companion API surfaces follow [`../02-architecture/native-companion-shell-and-os-adapter-policy.md`](../02-architecture/native-companion-shell-and-os-adapter-policy.md). Extension manifests request minimal permissions and prefer active-tab user gestures over persistent host permissions. Companion APIs must not expose raw selected text, active-tab content, local file contents, browser history, screenshots, clipboard contents, keystrokes, camera, microphone, OS window state, credentials, prompts, private document bodies, or hidden reasoning outside approved Source or Document workflows.
+
 ## Administrative surfaces
 
 Administrative endpoints are separate, least-privilege, strongly authenticated, not discoverable solely through UI hiding, and protected by network or identity controls as appropriate. Support access remains case-bound, time-limited, metadata-first, approved, and audited.
@@ -96,6 +100,7 @@ Release gates include:
 - injection, path, Git revision, and command fixtures;
 - automated DAST against preview/staging plus targeted manual review;
 - dependency, secret, workflow, container, and IaC scans.
+- browser extension manifest, active-tab, host-permission, native companion update-signing, file-watch path-boundary, deep-link, and no-ambient-capture tests where companion surfaces ship.
 
 Findings have owner, severity, exploitability, tenant/data impact, remediation SLA, release disposition, and regression test.
 

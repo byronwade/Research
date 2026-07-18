@@ -11,7 +11,8 @@
     "agent:status": "node scripts/agent-status.mjs",
     "agent:context": "node scripts/agent-context.mjs",
     "agent:check": "node scripts/validate-agent-control.mjs",
-    "docs:check": "node scripts/validate-agent-control.mjs",
-    "check": "pnpm agent:check"
+    "docs:links": "node scripts/validate-doc-links.mjs",
+    "docs:check": "node scripts/validate-agent-control.mjs && node scripts/validate-doc-links.mjs",
+    "check": "pnpm docs:check"
   }
 }

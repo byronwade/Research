@@ -2,6 +2,8 @@
 
 A new contributor or coding agent must be able to create a safe, reproducible local environment without access to production credentials, customer content, or undocumented operator knowledge.
 
+This document governs `FND-001` and `FND-002`. The foundation slice is not ready if a developer can only start a page; readiness means the same pinned workspace, configuration contract, services, simulators, fixtures, migrations, and health checks work locally and in CI. The concrete app/API/package/task scaffold is defined in [`../08-build/foundation-runtime-scaffold.md`](../08-build/foundation-runtime-scaffold.md).
+
 ## Supported baseline
 
 The repository pins the package manager, Node.js runtime range, workspace tools, database extensions, container images, and external command-line dependencies used by CI. The lockfile and tool-version files are committed. Floating `latest` versions are not part of the supported bootstrap path.

@@ -1,38 +1,490 @@
 {
   "schemaVersion": 1,
-  "entry": ["AGENTS.md", "docs/START-HERE.md", "docs/README.md"],
-  "alwaysRead": ["PRODUCT.md", "ARCHITECTURE.md", "docs/06-delivery/implementation-status.md"],
+  "entry": [
+    "AGENTS.md",
+    "docs/START-HERE.md",
+    "docs/README.md"
+  ],
+  "alwaysRead": [
+    "PRODUCT.md",
+    "ARCHITECTURE.md",
+    "docs/06-delivery/implementation-status.md"
+  ],
   "domains": {
-    "foundation": ["docs/00-foundation/product-brief.md", "docs/00-foundation/product-principles.md"],
-    "product": ["docs/01-product/project-workspace.md", "docs/01-product/chat.md", "docs/01-product/documents-and-canvas.md", "docs/01-product/sources.md", "docs/01-product/public-private-publishing.md", "docs/01-product/research-studio.md"],
-    "architecture": ["docs/02-architecture/system-architecture.md", "docs/02-architecture/domain-model.md", "docs/02-architecture/canonical-content-and-no-drift.md", "docs/02-architecture/developer-platform-api.md"],
-    "ai": ["docs/03-ai/research-orchestrator.md", "docs/03-ai/claims-evidence-citations.md", "docs/03-ai/multi-agent-orchestration.md", "docs/03-ai/project-memory.md"],
-    "sources": ["docs/04-sources/ingestion-pipeline.md", "docs/04-sources/indexing-and-retrieval.md", "docs/04-sources/github-integration.md"],
-    "security": ["docs/05-security/threat-model.md", "docs/05-security/data-governance.md"],
-    "delivery": ["ROADMAP.md", "docs/06-delivery/implementation-plan.md", "docs/06-delivery/implementation-status.md"],
-    "reference": ["docs/07-reference/official-references.md"],
-    "build": ["docs/08-build/README.md"]
+    "foundation": [
+      "docs/00-foundation/product-brief.md",
+      "docs/00-foundation/product-principles.md",
+      "docs/00-foundation/notebooklm-capability-benchmark.md",
+      "docs/00-foundation/notebooklm-feature-teardown.md",
+      "docs/00-foundation/user-opinion-and-competitive-signal-audit.md",
+      "docs/00-foundation/ai-work-os-and-agent-automation-signal-audit.md",
+      "docs/00-foundation/advanced-operating-layer-differentiation.md",
+      "docs/00-foundation/advanced-feature-opportunity-register.md"
+    ],
+    "product": [
+      "docs/01-product/project-workspace.md",
+      "docs/01-product/spatial-workbench-and-worksets.md",
+      "docs/01-product/chat.md",
+      "docs/01-product/documents-and-canvas.md",
+      "docs/01-product/collaboration-review-and-decision-workflows.md",
+      "docs/01-product/command-center-and-keyboard-workflows.md",
+      "docs/01-product/focus-continuity-and-work-resume.md",
+      "docs/01-product/offline-device-continuity-and-mobile-experience.md",
+      "docs/01-product/native-workspace-companion-and-os-integration.md",
+      "docs/01-product/adaptive-personalization-and-preference-controls.md",
+      "docs/01-product/project-operating-layer-and-work-control.md",
+      "docs/01-product/project-health-and-repair.md",
+      "docs/01-product/scenario-lab-and-change-simulation.md",
+      "docs/01-product/reversible-work-and-project-history.md",
+      "docs/01-product/delegated-trust-and-approval-load.md",
+      "docs/01-product/sources.md",
+      "docs/01-product/public-private-publishing.md",
+      "docs/01-product/research-studio.md",
+      "docs/01-product/onboarding-activation-and-imports.md",
+      "docs/01-product/project-settings-and-administration.md",
+      "docs/01-product/notifications-and-scheduled-automation.md",
+      "docs/01-product/automation-ux-and-performance-principles.md",
+      "docs/01-product/latency-aware-progressive-workflows.md",
+      "docs/01-product/project-atlas-and-impact-navigator.md",
+      "docs/01-product/automation-outcome-scorecard-and-adaptive-workflows.md",
+      "docs/01-product/composable-automation-recipes-and-playbooks.md",
+      "docs/01-product/automation-registry-and-run-debugger.md",
+      "docs/01-product/intent-capture-and-prompt-friction.md",
+      "docs/01-product/activity-timeline-and-review-queue.md",
+      "docs/01-product/product-truth-board-and-contradiction-radar.md",
+      "docs/01-product/trust-dashboard-and-evidence-coverage.md",
+      "docs/01-product/source-change-maintenance-and-living-docs.md",
+      "docs/01-product/accessibility-internationalization-and-inclusive-research.md",
+      "docs/01-product/abuse-prevention-and-trust-safety.md"
+    ],
+    "architecture": [
+      "docs/02-architecture/system-architecture.md",
+      "docs/02-architecture/domain-model.md",
+      "docs/02-architecture/canonical-content-and-no-drift.md",
+      "docs/02-architecture/tenancy-authorization-and-capabilities.md",
+      "docs/02-architecture/configuration-and-feature-flags.md",
+      "docs/02-architecture/durable-workflows-idempotency-and-outbox.md",
+      "docs/02-architecture/activity-event-log-and-replay.md",
+      "docs/02-architecture/collaboration-comments-and-decisions.md",
+      "docs/02-architecture/command-action-routing-and-shortcuts.md",
+      "docs/02-architecture/spatial-workbench-layout-and-worksets.md",
+      "docs/02-architecture/focus-state-and-resume-digests.md",
+      "docs/02-architecture/offline-sync-local-cache-and-device-policy.md",
+      "docs/02-architecture/native-companion-shell-and-os-adapter-policy.md",
+      "docs/02-architecture/adaptive-preference-learning-and-interface-policy.md",
+      "docs/02-architecture/project-operating-layer-control-plane.md",
+      "docs/02-architecture/project-health-diagnostics-and-repair.md",
+      "docs/02-architecture/scenario-simulation-engine.md",
+      "docs/02-architecture/reversal-ledger-and-compensation-engine.md",
+      "docs/02-architecture/delegated-trust-policy-and-approval-engine.md",
+      "docs/02-architecture/progressive-delivery-and-fast-path-cache-policy.md",
+      "docs/02-architecture/project-map-and-impact-analysis.md",
+      "docs/02-architecture/intent-preflight-and-clarification-policy.md",
+      "docs/02-architecture/schema-contract-and-data-evolution.md",
+      "docs/02-architecture/data-retention-deletion-and-portability.md",
+      "docs/02-architecture/context-packs-and-agent-handoff.md",
+      "docs/02-architecture/continuous-knowledge-maintenance.md",
+      "docs/02-architecture/living-dependency-graph.md",
+      "docs/02-architecture/agent-development-lifecycle-and-automation-governance.md",
+      "docs/02-architecture/automation-outcome-evaluation-and-adaptive-routing.md",
+      "docs/02-architecture/automation-recipe-graph-and-execution-policy.md",
+      "docs/02-architecture/developer-platform-api.md",
+      "docs/02-architecture/entitlements-metering-and-billing.md",
+      "docs/02-architecture/product-analytics-feedback-and-experimentation.md",
+      "docs/02-architecture/product-truth-graph-and-contradiction-detection.md",
+      "docs/02-architecture/accessibility-internationalization-and-locale-policy.md",
+      "docs/02-architecture/abuse-prevention-policy-and-enforcement.md"
+    ],
+    "ai": [
+      "docs/03-ai/research-orchestrator.md",
+      "docs/03-ai/claims-evidence-citations.md",
+      "docs/03-ai/model-routing-evaluation-and-cost-control.md",
+      "docs/03-ai/model-evaluation-and-change-management.md",
+      "docs/03-ai/model-council-and-disagreement-resolution.md",
+      "docs/03-ai/multi-agent-orchestration.md",
+      "docs/03-ai/multi-agent-research-control-plane.md",
+      "docs/03-ai/research-engine-adapters.md",
+      "docs/03-ai/research-engine-fabric.md",
+      "docs/03-ai/project-memory.md"
+    ],
+    "sources": [
+      "docs/04-sources/ingestion-pipeline.md",
+      "docs/04-sources/source-capability-and-format-matrix.md",
+      "docs/04-sources/web-acquisition-search-and-citation.md",
+      "docs/04-sources/indexing-and-retrieval.md",
+      "docs/04-sources/github-integration.md"
+    ],
+    "security": [
+      "docs/05-security/threat-model.md",
+      "docs/05-security/data-governance.md",
+      "docs/05-security/privacy-and-compliance-operations.md",
+      "docs/05-security/web-application-security-baseline.md",
+      "docs/05-security/secrets-encryption-and-configuration.md",
+      "docs/05-security/secure-software-supply-chain.md",
+      "docs/05-security/content-rights-ai-governance-and-data-residency.md",
+      "docs/05-security/security-verification-matrix.md"
+    ],
+    "delivery": [
+      "ROADMAP.md",
+      "docs/06-delivery/implementation-plan.md",
+      "docs/06-delivery/implementation-status.md",
+      "docs/06-delivery/documentation-governance-and-drift-control.md",
+      "docs/06-delivery/documentation-quality-and-authoring-standard.md",
+      "docs/06-delivery/semantic-drift-and-contradiction-review.md",
+      "docs/06-delivery/documentation-change-evidence-log.md",
+      "docs/06-delivery/product-readiness-gap-audit.md",
+      "docs/06-delivery/launch-readiness-and-release-evidence.md",
+      "docs/06-delivery/developer-environment-and-bootstrap.md",
+      "docs/06-delivery/environment-and-deployment-topology.md",
+      "docs/06-delivery/implementation-decision-records-and-open-decisions.md",
+      "docs/06-delivery/release-engineering-and-change-control.md",
+      "docs/06-delivery/test-strategy-and-quality-gates.md",
+      "docs/06-delivery/testing-and-validation-strategy.md",
+      "docs/06-delivery/performance-capacity-and-load-engineering.md",
+      "docs/06-delivery/observability-and-incident-operations.md",
+      "docs/06-delivery/service-ownership-and-runbooks.md",
+      "docs/06-delivery/runbook-catalog-and-operational-drills.md",
+      "docs/06-delivery/backup-restore-and-disaster-recovery.md",
+      "docs/06-delivery/data-migration-and-backfill-runbook.md",
+      "docs/06-delivery/continuous-discovery-and-user-feedback-operations.md",
+      "docs/06-delivery/user-research-and-experience-validation.md",
+      "docs/06-delivery/user-research-segment-and-screener-matrix.md",
+      "docs/06-delivery/user-opinion-research-coverage-matrix.md",
+      "docs/06-delivery/user-opinion-coding-and-synthesis-ledger.md",
+      "docs/06-delivery/human-ai-interaction-and-automation-ux-review.md",
+      "docs/06-delivery/product-outcome-metrics-and-strategic-bet-scorecard.md",
+      "docs/06-delivery/telemetry-and-experience-instrumentation-matrix.md",
+      "docs/06-delivery/automation-failure-recovery-and-learning-loop.md",
+      "docs/06-delivery/customer-facing-claim-and-evidence-boundary-matrix.md",
+      "docs/06-delivery/research-experience-benchmark-suite.md",
+      "docs/06-delivery/advanced-differentiation-benchmark-matrix.md",
+      "docs/06-delivery/advanced-feature-incubation-and-prototype-governance.md",
+      "docs/06-delivery/public-signal-source-quality-and-citation-policy.md",
+      "docs/06-delivery/external-signal-refresh-and-competitive-watch.md",
+      "docs/06-delivery/frontier-feature-watch-and-novelty-control.md",
+      "docs/06-delivery/specification-signal-decision-ledger.md"
+    ],
+    "reference": [
+      "docs/07-reference/api-error-operation-and-pagination-contract.md",
+      "docs/07-reference/database-schema-blueprint.md",
+      "docs/07-reference/definition-of-done.md",
+      "docs/07-reference/event-webhook-and-idempotency-contract.md",
+      "docs/07-reference/official-references.md",
+      "docs/07-reference/terminology.md",
+      "docs/07-reference/requirements-traceability-matrix.md"
+    ],
+    "build": [
+      "docs/08-build/README.md",
+      "docs/08-build/foundation-runtime-scaffold.md",
+      "docs/08-build/open-source-tooling-landscape.md",
+      "docs/08-build/ui-system-and-chatgpt-patterns.md",
+      "docs/08-build/deep-research-and-long-form-generation.md",
+      "docs/08-build/github-integration-and-repository-editing.md",
+      "docs/08-build/research-studio-and-canvas-tooling.md",
+      "docs/08-build/developer-platform-api-sdk.md",
+      "docs/08-build/open-source-research-platform-catalog.md"
+    ]
   },
   "requirementPrefixes": {
-    "PROJ": ["product", "architecture", "security"],
-    "UX": ["product"],
-    "CHAT": ["product", "ai", "architecture"],
-    "DOC": ["product", "architecture"],
-    "SRC": ["product", "sources", "security"],
-    "EVID": ["ai", "sources"],
-    "RET": ["sources", "security"],
-    "AI": ["ai", "architecture"],
-    "RES": ["ai", "delivery"],
-    "AGENT": ["ai", "security"],
-    "MEM": ["ai", "architecture"],
-    "MAINT": ["architecture", "ai"],
-    "PUB": ["product", "architecture", "security"],
-    "GH": ["sources", "security"],
-    "API": ["architecture", "security"],
-    "SEC": ["security"],
-    "OPS": ["architecture", "security", "delivery"],
-    "A11Y": ["product", "security", "delivery"],
-    "I18N": ["product", "architecture", "delivery"],
-    "READY": ["delivery", "security"]
+    "FND": [
+      "foundation",
+      "build",
+      "delivery",
+      "security"
+    ],
+    "DOCS": [
+      "delivery",
+      "foundation",
+      "reference"
+    ],
+    "PROJ": [
+      "product",
+      "architecture",
+      "security"
+    ],
+    "UX": [
+      "product",
+      "architecture",
+      "build",
+      "delivery"
+    ],
+    "LAYOUT": [
+      "product",
+      "architecture",
+      "build",
+      "delivery",
+      "reference",
+      "security"
+    ],
+    "DEVICE": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference",
+      "build"
+    ],
+    "NATIVE": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference",
+      "build"
+    ],
+    "PREF": [
+      "product",
+      "architecture",
+      "ai",
+      "security",
+      "delivery",
+      "reference",
+      "build"
+    ],
+    "WORK": [
+      "product",
+      "architecture",
+      "delivery",
+      "reference"
+    ],
+    "HEALTH": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference",
+      "build"
+    ],
+    "SIM": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference",
+      "build"
+    ],
+    "REV": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference",
+      "build"
+    ],
+    "APPROVAL": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference"
+    ],
+    "CHAT": [
+      "product",
+      "ai",
+      "architecture"
+    ],
+    "INTENT": [
+      "product",
+      "architecture",
+      "ai",
+      "delivery",
+      "security"
+    ],
+    "DOC": [
+      "product",
+      "architecture"
+    ],
+    "SRC": [
+      "product",
+      "sources",
+      "security"
+    ],
+    "EVID": [
+      "ai",
+      "sources"
+    ],
+    "RET": [
+      "sources",
+      "security"
+    ],
+    "AI": [
+      "ai",
+      "architecture"
+    ],
+    "RES": [
+      "ai",
+      "delivery"
+    ],
+    "AGENT": [
+      "ai",
+      "security"
+    ],
+    "ADLC": [
+      "architecture",
+      "ai",
+      "delivery"
+    ],
+    "MEM": [
+      "ai",
+      "architecture"
+    ],
+    "MAINT": [
+      "product",
+      "architecture",
+      "sources",
+      "delivery",
+      "ai"
+    ],
+    "PUB": [
+      "product",
+      "architecture",
+      "security"
+    ],
+    "GH": [
+      "sources",
+      "security"
+    ],
+    "API": [
+      "architecture",
+      "security"
+    ],
+    "AUTO": [
+      "product",
+      "architecture",
+      "delivery"
+    ],
+    "BENCH": [
+      "foundation",
+      "product",
+      "delivery"
+    ],
+    "ONBOARD": [
+      "product",
+      "delivery"
+    ],
+    "ADMIN": [
+      "product",
+      "architecture",
+      "security",
+      "delivery"
+    ],
+    "SUPPORT": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference",
+      "build"
+    ],
+    "COLLAB": [
+      "product",
+      "architecture",
+      "ai",
+      "security",
+      "delivery"
+    ],
+    "NOTIFY": [
+      "product",
+      "architecture"
+    ],
+    "ENT": [
+      "architecture",
+      "delivery"
+    ],
+    "ANALYTICS": [
+      "architecture",
+      "security",
+      "delivery"
+    ],
+    "FEEDBACK": [
+      "architecture",
+      "delivery",
+      "product",
+      "security"
+    ],
+    "TRUTH": [
+      "foundation",
+      "product",
+      "architecture",
+      "delivery",
+      "security"
+    ],
+    "PERF": [
+      "product",
+      "architecture",
+      "delivery"
+    ],
+    "MAP": [
+      "product",
+      "architecture",
+      "delivery",
+      "reference"
+    ],
+    "GOV": [
+      "security",
+      "architecture"
+    ],
+    "RESIDENCY": [
+      "security",
+      "architecture",
+      "delivery"
+    ],
+    "SEC": [
+      "security"
+    ],
+    "OPS": [
+      "architecture",
+      "security",
+      "delivery"
+    ],
+    "A11Y": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "build"
+    ],
+    "I18N": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "build"
+    ],
+    "ABUSE": [
+      "product",
+      "architecture",
+      "security",
+      "delivery",
+      "reference"
+    ],
+    "READY": [
+      "delivery",
+      "security"
+    ],
+    "TRUST": [
+      "product",
+      "ai",
+      "architecture",
+      "delivery"
+    ],
+    "CTX": [
+      "architecture",
+      "ai",
+      "sources",
+      "security"
+    ],
+    "ACT": [
+      "product",
+      "architecture",
+      "delivery",
+      "security"
+    ],
+    "COUNCIL": [
+      "ai",
+      "product",
+      "architecture",
+      "delivery"
+    ]
   }
 }

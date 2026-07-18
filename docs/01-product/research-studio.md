@@ -37,4 +37,8 @@ Every artifact has a stable type, structured specification, version history, sou
 
 ## Interaction
 
-A user can create an artifact from Chat, a document, selected sources, claims, or a Research Run. The artifact opens in an appropriate canvas with editable structure, evidence inspection, revision history, comments, export, and a path back to the canonical Project knowledge graph.
+A user can create an artifact from Chat, a document, selected sources, claims, or a Research Run. The artifact opens in an appropriate canvas with editable structure, evidence inspection, revision history, comments, reviewable suggestions, export, and a path back to the canonical Project knowledge graph.
+
+Artifact comments, assignments, review requests, and decisions are governed by [`collaboration-review-and-decision-workflows.md`](collaboration-review-and-decision-workflows.md). They anchor to artifact versions and components without letting visual canvas state replace canonical claims or evidence.
+
+Evidence maps and evidence tables are Studio views over the Trust dashboard and canonical evidence graph. They must preserve claim state, source-version identity, locator validity, and publication blockers defined in [`trust-dashboard-and-evidence-coverage.md`](trust-dashboard-and-evidence-coverage.md).

@@ -15,9 +15,10 @@ Every slice provides:
 7. **Security:** threat-model updates, dependency review, secret handling, input and output controls, and relevant adversarial tests.
 8. **Observability:** structured events, metrics, traces, dashboards, alerts, and runbook links without sensitive content.
 9. **Performance:** representative latency, throughput, queue, cost, and resource evidence when the slice affects a service objective.
-10. **User experience:** accessible keyboard, loading, empty, error, reconnect, conflict, and narrow-screen states.
+10. **User experience:** accessible keyboard, screen-reader-critical, loading, empty, error, reconnect, conflict, offline fallback, mobile, tablet, installed-app, local-draft recovery, sync-conflict review, narrow-screen, reduced-motion, contrast, drag-alternative, focus-return, and live-update states.
 11. **Documentation:** governing contracts, ADRs, environment variables, operations, and user/developer guidance updated.
-12. **Evidence:** exact commands, test reports, artifact or deployment identifiers, reviewer, and completion commit recorded in the implementation ledger.
+12. **Claim evidence:** customer-facing wording stronger than specification language has current CustomerClaimEvidenceRecords with allowed language, blocked language, scope, limitations, evidence floor, expiry, and approval.
+13. **Evidence:** exact commands, test reports, artifact or deployment identifiers, reviewer, and completion commit recorded in the implementation ledger.
 
 A slice cannot be marked complete while a dependency is incomplete or while its acceptance criteria rely on a placeholder, mock, disabled test, or undocumented manual step.
 
@@ -39,7 +40,7 @@ Unrelated changes are separated. Review comments are resolved or explicitly disp
 
 ## Feature completion
 
-A user-facing feature is complete when the full journey works across authentication, authorization, persistence, reconnect, source provenance, audit, billing/entitlement, accessibility, telemetry, support diagnostics, deletion, and export as applicable. The interface does not advertise a capability whose backend, permissions, or operational support is incomplete.
+A user-facing feature is complete when the full journey works across authentication, authorization, persistence, reconnect, source provenance, audit, billing/entitlement, accessibility, internationalization, locale rendering, device capability labels, local-cache policy, offline fallback, local draft recovery, sync conflict review, SupportDiagnosticBundles, SupportAccessRequests, SupportAccessSessions, support diagnostics, deletion, and export as applicable. The interface does not advertise a capability whose backend, permissions, or operational support is incomplete.
 
 ## Production completion
 
@@ -48,7 +49,7 @@ A release additionally requires:
 - one immutable artifact promoted through environments;
 - SBOM, provenance, dependency, license, and vulnerability evidence;
 - compatible schema, event, workflow, index, export, and SDK state;
-- conformance, accessibility, localization, security, performance, load, and degraded-mode results;
+- conformance, accessibility, localization, Unicode, RTL or mixed-direction, accessible-output, security, performance, load, and degraded-mode results;
 - canary metrics and stop conditions;
 - tested rollback and forward-recovery paths;
 - backup freshness and successful restore exercise;
@@ -58,7 +59,16 @@ A release additionally requires:
 
 ## Documentation completion
 
-A document is accepted when its purpose is unique, authority is clear, links resolve, terminology matches canonical usage, requirements and slice ownership are synchronized, time-sensitive claims are sourced and reviewed, and it distinguishes specified from implemented behavior.
+A document is accepted when:
+
+- its purpose is unique, authority is clear, and primary reader task is identifiable;
+- links resolve and indexes, routing metadata, required-reading lists, and status ledgers are synchronized;
+- terminology matches canonical usage and durable obligations map to requirements and owner slices;
+- time-sensitive claims are sourced, reviewed, and dated;
+- customer-facing claims stronger than specification language are linked to [`../06-delivery/customer-facing-claim-and-evidence-boundary-matrix.md`](../06-delivery/customer-facing-claim-and-evidence-boundary-matrix.md) or to runtime Product Truth claim evidence;
+- examples, states, diagrams, schemas, events, commands, or runbook steps are concrete enough to reject an incorrect implementation where applicable;
+- stale, duplicate, superseded, and dead documents have been updated, redirected, deleted, or explicitly retained as evidence;
+- it distinguishes specified, implemented, validated, blocked, deferred, and not implemented behavior.
 
 ## Evidence expiry
 

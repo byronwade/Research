@@ -5,6 +5,7 @@
 ```text
 Upload or connector event
 → authorization and rights check
+→ abuse preflight and source-acquisition budget
 → immutable raw object
 → MIME and byte-signature inspection
 → malware, archive, and size controls
@@ -34,7 +35,7 @@ Every derivative records parser name, version, configuration hash, source checks
 
 ## Web capture
 
-Use HTTP-first capture, Readability or Trafilatura extraction, and Playwright escalation for JavaScript-dependent pages. Crawling is bounded by Project policy, rights decisions, robots and site restrictions where applicable, rate limits, and explicit depth/page budgets. Store an immutable response or rendered snapshot.
+Use HTTP-first capture, Readability or Trafilatura extraction, and Playwright escalation for JavaScript-dependent pages. Crawling is bounded by Project policy, rights decisions, AbusePolicy, robots and site restrictions where applicable, rate limits, and explicit depth/page budgets. Store an immutable response or rendered snapshot.
 
 ## Failure states
 
@@ -42,4 +43,4 @@ Ingestion distinguishes stored, inspectable, searchable, citable, and richly und
 
 ## Safety
 
-Parsers and archive expansion run in isolation. Source content is untrusted and cannot become agent instruction. Enforce decompression limits, file-type validation, malware controls, timeout and memory budgets, and denial-of-wallet protections.
+Parsers and archive expansion run in isolation. Source content is untrusted and cannot become agent instruction. Enforce decompression limits, file-type validation, malware controls, timeout and memory budgets, abuse throttles, and denial-of-wallet protections.

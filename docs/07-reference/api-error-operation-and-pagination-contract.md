@@ -43,13 +43,13 @@ HTTP errors use Problem Details semantics (`application/problem+json`) with a st
 |---|---|
 | 400 | `invalid_request`, `invalid_cursor`, `unsupported_media`, `schema_validation_failed` |
 | 401 | `authentication_required`, `session_expired`, `invalid_service_token` |
-| 403 | `permission_denied`, `policy_denied`, `capability_required`, `provider_not_allowed` |
+| 403 | `permission_denied`, `policy_denied`, `capability_required`, `provider_not_allowed`, `abuse_policy_denied`, `abuse_review_required`, `abuse_challenge_required`, `abuse_capability_suspended`, `provider_policy_denied`, `content_safety_blocked`, `appeal_not_available` |
 | 404 | `resource_not_found` without confirming inaccessible resource existence |
-| 409 | `version_conflict`, `idempotency_conflict`, `operation_state_conflict`, `duplicate_resource` |
+| 409 | `version_conflict`, `idempotency_conflict`, `operation_state_conflict`, `duplicate_resource`, `stale_recovery_candidate`, `reconciliation_required`, `offline_draft_conflict`, `sync_conflict`, `local_cache_invalidated` |
 | 412 | `precondition_failed`, `etag_mismatch` |
 | 413 | `request_too_large`, `source_limit_exceeded`, `result_limit_exceeded` |
-| 422 | `semantically_invalid`, `unsupported_transition`, `citation_validation_failed` |
-| 429 | `rate_limited`, `quota_exceeded`, `concurrency_limited`, `budget_reservation_failed` |
+| 422 | `semantically_invalid`, `unsupported_transition`, `citation_validation_failed`, `irreversible_effect`, `compensation_required`, `unsupported_device_capability`, `queue_action_prohibited`, `offline_storage_unavailable`, `expired_offline_lease` |
+| 429 | `rate_limited`, `quota_exceeded`, `concurrency_limited`, `budget_reservation_failed`, `abuse_limit_exceeded`, `abuse_retry_later` |
 | 500 | `internal_error` |
 | 502/503/504 | normalized provider, dependency, capacity, and timeout errors |
 
@@ -77,7 +77,7 @@ Operation state and behavior are governed by `durable-workflows-idempotency-and-
 
 ## Idempotency
 
-Mutation endpoints that can create resources, reserve budget, trigger work, publish, send, bill, or write externally accept `Idempotency-Key`. Scope, retention, semantic request hashing, and conflict behavior are documented per endpoint.
+Mutation endpoints that can create resources, reserve budget, trigger work, publish, send, bill, write externally, restore, replay, withdraw, compensate, or reconcile accept `Idempotency-Key`. Scope, retention, semantic request hashing, and conflict behavior are documented per endpoint.
 
 A client retry after a network timeout uses the same key. A new logical command uses a new key. Server-generated side effects derive their keys from the internal Operation and step identity.
 
@@ -85,7 +85,7 @@ A client retry after a network timeout uses the same key. A new logical command 
 
 Mutable resources expose an ETag or integer revision. Updates use `If-Match`, `expected_version`, or a domain-specific expected base revision. A stale update returns 409 or 412 with current version metadata the caller is authorized to see.
 
-Document and artifact patch APIs never use last-write-wins for overlapping edits. Membership, policy, billing, connector, and publication changes require current versions or explicit administrative override.
+Document and artifact patch APIs never use last-write-wins for overlapping edits. Membership, policy, billing, connector, publication, and recovery changes require current versions or explicit administrative override. Recovery APIs also revalidate ReversalCapability, side-effect ledger state, compensation requirements, reconciliation checks, and irreversible-effect labels before mutation.
 
 ## Pagination
 
@@ -124,6 +124,6 @@ Breaking changes require a new supported API version or explicit compatibility m
 
 ## Contract verification
 
-OpenAPI is generated from implementation schemas and checked against committed expectations. TypeScript and Python clients run the same positive, negative authorization, idempotency, pagination, error, and concurrency fixtures.
+OpenAPI is generated from implementation schemas and checked against committed expectations. TypeScript and Python clients run the same positive, negative authorization, idempotency, pagination, error, concurrency, stale recovery, compensation, reconciliation, and irreversible-effect fixtures.
 
 Official references include RFC 9457 Problem Details, HTTP conditional request semantics, and the repository’s developer-platform and contract-evolution documents.

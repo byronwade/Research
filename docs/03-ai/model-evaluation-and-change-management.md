@@ -67,6 +67,8 @@ Use deterministic checks wherever possible:
 
 Human review and calibrated model judges supplement deterministic checks for coherence, usefulness, and nuanced entailment. Judge prompts, models, thresholds, and calibration sets are versioned. Disagreement and confidence are retained rather than collapsed into false precision.
 
+Model-council evaluations are governed by [`model-council-and-disagreement-resolution.md`](model-council-and-disagreement-resolution.md). They measure whether independent participants improve contradiction discovery, missing-evidence detection, and false-confidence reduction without unacceptable cost, latency, or policy exposure.
+
 ## Change classes
 
 A patch-only provider alias correction may be low risk. A new frontier model, prompt architecture, retrieval strategy, tool permission, fallback route, or research engine is high risk. High-risk changes require broader evaluation, security review, staged rollout, and rollback evidence.

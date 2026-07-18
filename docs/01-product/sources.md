@@ -1,6 +1,6 @@
 # Sources
 
-Sources are a first-class Project surface and the foundation of every grounded answer, claim, document, artifact, and publication.
+Sources are a first-class Project surface and the foundation of every grounded answer, claim, document, artifact, and publication. Source freshness, source-change review, stale-claim revalidation, and maintenance patch proposals are governed by [`source-change-maintenance-and-living-docs.md`](source-change-maintenance-and-living-docs.md).
 
 ## Supported source families
 
@@ -21,7 +21,7 @@ Agents may propose source additions, replacements, exclusion, or archival. They 
 
 ## Source card
 
-A source card exposes title, type, owner, visibility, connection, synchronization state, version, freshness, capabilities, claims supported, last use, and audit history.
+A source card exposes title, type, owner, visibility, connection, synchronization state, version, freshness, latest maintenance state, capabilities, claims supported, downstream impact, last use, and audit history.
 
 ## Explicit capabilities
 
@@ -42,3 +42,7 @@ Clicking a citation opens the exact source locator: PDF page and bounding box, w
 ## Permissions and privacy
 
 The same internal source can support private and public document projections, but publication policy decides what may be exposed or quoted. Authorization is applied before retrieval, and source revocation invalidates inaccessible evidence in dependent outputs.
+
+## Maintenance
+
+When a Source changes, Research creates a new immutable SourceVersion, maps affected EvidenceSpans where possible, revalidates dependent Claims, opens Impact Reports when downstream state exists, and proposes the smallest safe patches. Failed refresh, stale, disputed, removed, unsupported, unresolved, rights-blocked, and provider-policy-blocked states remain visible until review or policy resolution.

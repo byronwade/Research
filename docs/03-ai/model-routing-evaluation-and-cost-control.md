@@ -53,6 +53,8 @@ Fallback is declared per role and operation. It must preserve required modality,
 - A verifier should not automatically inherit the same model and prompt configuration as the generator when independent checking is valuable.
 - Provider errors never cause silent expansion to an otherwise disallowed provider.
 
+Model council routing follows [`model-council-and-disagreement-resolution.md`](model-council-and-disagreement-resolution.md). Council participants are selected for policy eligibility, task fit, independence, cost, latency, and evaluation quality; a chair model cannot route around Project provider policy.
+
 ## Prompt and configuration versioning
 
 System instructions, tool definitions, schemas, retrieval policy, temperature or reasoning settings, and model-role mappings have stable versions. Every generation records the effective versions, source snapshot, model, provider route, usage, and result identity.
@@ -93,6 +95,7 @@ Budget policy exists at platform, plan, Organization, Project, user, Operation, 
 - route classification and extraction to qualified efficient models;
 - cap worker fan-out and speculative searches;
 - stop when coverage and verification criteria are met;
+- invoke model council only for risk classes where disagreement or independent verification is worth the cost and latency;
 - retain expensive generations and research evidence instead of regenerating them after refresh;
 - attribute usage by Organization, Project, user, feature, Operation, stage, model, and provider.
 

@@ -10,7 +10,9 @@ last_reviewed: 2026-07-17
 
 ## Purpose
 
-Research will execute third-party JavaScript, parsers, OCR/media tools, browser engines, database extensions, GitHub Actions, model/provider SDKs, generated SDKs, containers, and isolated worker images. The software supply chain is therefore part of the product trust boundary.
+Research will execute third-party JavaScript, parsers, OCR/media tools, browser engines, database extensions, GitHub Actions, model/provider SDKs, generated SDKs, containers, optional browser extension bundles, optional desktop companion binaries, native updaters, and isolated worker images. The software supply chain is therefore part of the product trust boundary.
+
+The first runtime slice must wire the supply-chain baseline into `FND-003`: lockfile integrity, immutable CI inputs, dependency review, license and vulnerability scanning, secret scanning, and release provenance are foundation gates, not late launch tasks.
 
 ## Dependency policy
 
@@ -48,7 +50,7 @@ Deployment verifies the artifact digest and provenance against the expected repo
 
 ## SBOM and vulnerability management
 
-Each release has an SBOM covering application packages, worker/container packages, native binaries, and material build dependencies. Vulnerability scanning runs on pull requests, scheduled refresh, and release candidates.
+Each release has an SBOM covering application packages, worker/container packages, browser extension bundles, desktop companion binaries, native updaters, native binaries, and material build dependencies. Vulnerability scanning runs on pull requests, scheduled refresh, and release candidates.
 
 Findings are normalized with component, version, exploitability, reachability, runtime exposure, tenant/data impact, fix availability, owner, SLA, and disposition. Severity alone does not define priority, but critical exploitable issues cannot be accepted silently.
 
@@ -79,6 +81,17 @@ Parser, OCR, browser, media, office, and code-execution workers use minimal, ver
 - support rapid disablement and replacement.
 
 Downloaded models, language packs, browser binaries, and parser data files are checksum-verified and stored in controlled registries.
+
+## Companion and extension artifacts
+
+Browser extension packages and desktop companion installers are release artifacts. They require:
+
+- reviewed manifest permissions and extension IDs;
+- signed packages and verified update URLs;
+- channel separation for internal, canary, staging, and production;
+- provenance tied to the same source commit and release evidence as the web/API build;
+- emergency disablement by extension ID, desktop app ID, version, platform, update channel, Organization, or Project policy;
+- regression tests proving companion updates cannot add ambient capture, broaden host permissions, disable revocation, or bypass server-owned authorization.
 
 ## Secrets in the build system
 

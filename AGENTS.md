@@ -70,6 +70,8 @@ Never silently choose the easiest interpretation when canonical documents confli
 - Do not introduce a second document authority, memory authority, workflow authority, or evidence model.
 - Add tests and observability with each executable slice.
 - Update requirements, ADRs, routes, and implementation status when architecture changes.
+- Follow `docs/06-delivery/documentation-governance-and-drift-control.md` when documentation changes affect product behavior, architecture, requirements, routing, status, tooling, or launch evidence.
+- Run `pnpm docs:check` when changing documentation links, routing, requirements, or implementation status.
 - Never commit secrets, customer source content, credentials, or private model traces.
 
 ## Completion evidence

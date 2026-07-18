@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "status": "canonical-specification",
+  "reviewPolicy": {
+    "rule": "Tooling choices are implementation accelerators. Research owns Projects, Sources, Claims, Documents, Memory, Research Runs, publications, permissions, entitlements, and audit behavior.",
+    "unstableClaims": [
+      "package versions",
+      "provider capabilities",
+      "pricing",
+      "retention",
+      "rate limits",
+      "beta or GA status",
+      "security behavior",
+      "license terms"
+    ],
+    "requiredBeforeImplementation": "Recheck current primary documentation and record the review date in the implementation pull request."
+  },
+  "decisions": [
+    {
+      "id": "runtime-tanstack-start",
+      "category": "application-runtime",
+      "tool": "TanStack Start",
+      "decision": "adopt",
+      "ownerSlice": "foundation-01",
+      "rationale": "Provides full-stack React routing, server functions, streaming, and SSR while preserving modular application ownership.",
+      "boundary": "Application shell and server entrypoints only; domain policy remains in Research packages."
+    },
+    {
+      "id": "api-hono",
+      "category": "api-runtime",
+      "tool": "Hono",
+      "decision": "adopt",
+      "ownerSlice": "foundation-01",
+      "rationale": "Small typed HTTP layer suitable for one deployable application and future extraction.",
+      "boundary": "Transport, route composition, middleware, and request validation."
+    },
+    {
+      "id": "ai-sdk",
+      "category": "ai-runtime",
+      "tool": "Vercel AI SDK",
+      "decision": "adopt",
+      "ownerSlice": "chat-08",
+      "rationale": "Supports streaming chat, tool calls, structured output, resumable UI patterns, and provider abstraction.",
+      "boundary": "Presentation and orchestration adapter; model policy resolves through the Research capability registry."
+    },
+    {
+      "id": "ai-gateway",
+      "category": "model-routing",
+      "tool": "Vercel AI Gateway",
+      "decision": "adopt",
+      "ownerSlice": "chat-08",
+      "rationale": "Centralizes model access, routing, observability, fallback, and spend controls.",
+      "boundary": "Gateway catalog is synchronized into product-owned model-role policy."
+    },
+    {
+      "id": "workflows",
+      "category": "durable-execution",
+      "tool": "Vercel Workflows",
+      "decision": "adopt",
+      "ownerSlice": "research-13",
+      "rationale": "Fits resumable source processing, research runs, approvals, retries, and long-running work.",
+      "boundary": "Workflow state is mirrored in application-owned run records and audit events."
+    },
+    {
+      "id": "queues",
+      "category": "durable-execution",
+      "tool": "Vercel Queues",
+      "decision": "evaluate",
+      "ownerSlice": "research-13",
+      "rationale": "Useful for backpressure and at-least-once work distribution after the first vertical slice proves workload shape.",
+      "boundary": "No queue consumer may bypass idempotency, policy, or audit."
+    },
+    {
+      "id": "blob",
+      "category": "object-storage",
+      "tool": "Vercel Blob",
+      "decision": "adopt",
+      "ownerSlice": "uploads-05",
+      "rationale": "Stores immutable originals, snapshots, derived media, and exports.",
+      "boundary": "Postgres remains the metadata, permission, and retention authority."
+    },
+    {
+      "id": "sandbox",
+      "category": "isolation",
+      "tool": "Vercel Sandbox",
+      "decision": "adopt",
+      "ownerSlice": "parsing-06",
+      "rationale": "Isolates untrusted parsing, archive expansion, repository workspaces, and code execution.",
+      "boundary": "Sandbox outputs are treated as untrusted until normalized and validated."
+    },
+    {
+      "id": "postgres",
+      "category": "database",
+      "tool": "Postgres",
+      "decision": "adopt",
+      "ownerSlice": "persistence-03",
+      "rationale": "Transactional authority for Projects, permissions, documents, claims, evidence, runs, audit, and outbox.",
+      "boundary": "All customer-visible state changes flow through typed application services."
+    },
+    {
+      "id": "pgvector",
+      "category": "retrieval",
+      "tool": "pgvector",
+      "decision": "adopt",
+      "ownerSlice": "indexing-07",
+      "rationale": "Keeps semantic retrieval near permission and metadata filters for the first release.",
+      "boundary": "Vector similarity is a candidate source, never standalone evidence."
+    },
+    {
+      "id": "postgres-full-text",
+      "category": "retrieval",
+      "tool": "PostgreSQL full-text search and pg_trgm",
+      "decision": "adopt",
+      "ownerSlice": "indexing-07",
+      "rationale": "Supports deterministic lexical retrieval, exact phrase search, and hybrid ranking.",
+      "boundary": "Retrieval candidates require authorization before model exposure."
+    },
+    {
+      "id": "docling-tika-grobid",
+      "category": "source-parsing",
+      "tool": "Docling, Apache Tika, and GROBID",
+      "decision": "evaluate",
+      "ownerSlice": "parsing-06",
+      "rationale": "Candidate parsers for PDFs, office files, scholarly papers, metadata, and structural extraction.",
+      "boundary": "Parser output is normalized into Research ParsedElements and EvidenceSpans."
+    },
+    {
+      "id": "playwright-readability",
+      "category": "web-capture",
+      "tool": "Playwright and Readability",
+      "decision": "adopt",
+      "ownerSlice": "web-12",
+      "rationale": "Allows HTTP-first capture with browser escalation for pages that require rendering.",
+      "boundary": "Captured pages require rights, robots, attribution, and snapshot policy checks."
+    },
+    {
+      "id": "plate-codemirror",
+      "category": "documents",
+      "tool": "Plate and CodeMirror",
+      "decision": "adopt",
+      "ownerSlice": "documents-10",
+      "rationale": "Supports rich Markdown editing, raw Markdown editing, stable blocks, comments, and reviewable AI patches.",
+      "boundary": "Markdown serialization and block IDs remain the durable content authority."
+    },
+    {
+      "id": "unified-remark-rehype",
+      "category": "documents",
+      "tool": "unified, remark, and rehype",
+      "decision": "adopt",
+      "ownerSlice": "documents-10",
+      "rationale": "Provides a typed Markdown processing pipeline for rendering, exports, citations, and validation.",
+      "boundary": "Generated transformations must preserve stable block identity and citation locators."
+    },
+    {
+      "id": "tree-sitter-ripgrep-ast-grep",
+      "category": "repository-understanding",
+      "tool": "Tree-sitter, ripgrep, and ast-grep",
+      "decision": "adopt",
+      "ownerSlice": "github-20",
+      "rationale": "Supports repository indexing, symbol extraction, code search, and safe patch proposals.",
+      "boundary": "Repository edits remain reviewable, tested, branch-based, and draft-PR based."
+    },
+    {
+      "id": "biome-vitest-playwright",
+      "category": "quality",
+      "tool": "Biome, Vitest, Testing Library, MSW, Playwright, and axe-core",
+      "decision": "adopt",
+      "ownerSlice": "foundation-01",
+      "rationale": "Establishes fast local quality gates and browser-level verification from the first slice.",
+      "boundary": "Runtime behavior is not complete until tests, accessibility checks, and release evidence pass."
+    },
+    {
+      "id": "k6-load-testing",
+      "category": "performance-testing",
+      "tool": "Grafana k6",
+      "decision": "evaluate",
+      "ownerSlice": "conformance-26",
+      "rationale": "Provides scripted load, spike, soak, stress, and threshold-based performance tests for release and capacity evidence.",
+      "boundary": "Synthetic or approved fixtures only; k6 results inform SLO and capacity gates but do not store customer content."
+    },
+    {
+      "id": "promptfoo-otel",
+      "category": "evaluation-observability",
+      "tool": "Promptfoo and OpenTelemetry",
+      "decision": "adopt",
+      "ownerSlice": "grounding-09",
+      "rationale": "Separates citation quality, retrieval recall, model quality, latency, and cost evaluation.",
+      "boundary": "Telemetry must be minimized and cannot store private Project content unless explicitly approved."
+    }
+  ]
+}

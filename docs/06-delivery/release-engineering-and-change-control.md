@@ -10,7 +10,7 @@ last_reviewed: 2026-07-17
 
 ## Purpose
 
-This contract defines how Research moves one reviewed source revision into preview, staging, and production without rebuilding different artifacts, hiding migration risk, or losing the ability to stop and reverse a release. It applies to the web application, Hono API, durable workflows, workers, generated SDKs, database migrations, search/index schemas, prompts, evaluation sets, policy bundles, and customer-facing documentation.
+This contract defines how Research moves one reviewed source revision into preview, staging, and production without rebuilding different artifacts, hiding migration risk, or losing the ability to stop and reverse a release. It applies to the web application, optional native companion and browser extension artifacts, Hono API, durable workflows, workers, generated SDKs, database migrations, search/index schemas, prompts, evaluation sets, policy bundles, and customer-facing documentation.
 
 A successful deployment is not automatically a safe release. A release is the coordinated promotion of an immutable application artifact plus a declared set of compatible contracts, data changes, configuration, and operational evidence.
 
@@ -20,12 +20,14 @@ Every release candidate receives a stable `ReleaseCandidateId` and records:
 
 - source commit and clean-tree status;
 - dependency lockfile and build-tool versions;
-- application, worker, workflow, prompt, policy, schema, and SDK versions;
+- application, worker, workflow, prompt, policy, schema, SDK, browser extension, and desktop companion versions where applicable;
 - produced artifact digests and software bill of materials;
 - provenance or attestation references;
 - database and projection migration plans;
 - feature-flag and configuration snapshots;
+- implementation decision register snapshot, including accepted decisions, open decisions, waivers, expiry dates, and review triggers;
 - evaluation, unit, integration, browser, security, accessibility, load, and recovery evidence;
+- CustomerClaimEvidenceRecords for customer-facing release notes, support guidance, availability statements, SDK or API documentation, testimonials, benchmark wording, and launch communications that make stronger-than-specification claims;
 - reviewer, approval, promotion, rollback, and incident records.
 
 The same immutable artifacts are promoted between environments. Production may not rebuild from source after staging acceptance because a rebuild creates a different release candidate.
@@ -43,7 +45,7 @@ Pull request
   → post-release verification
 ```
 
-Preview environments verify ordinary code paths and design behavior. Integration environments exercise real dependency adapters with non-production data. Staging must use production-equivalent topology, policy defaults, migration order, and observability. Production promotion is blocked when staging uses a materially different artifact, schema, queue, region, identity, or provider configuration.
+Preview environments verify ordinary code paths and design behavior. Integration environments exercise real dependency adapters with non-production data. Staging must use production-equivalent topology, policy defaults, migration order, and observability. Production promotion is blocked when staging uses a materially different artifact, schema, queue, region, identity, or provider configuration, or when the difference is not backed by an accepted implementation decision record.
 
 ## Required gates
 
@@ -67,7 +69,7 @@ A waiver must identify the failed gate, owner, scope, expiration, customer impac
 | Class | Examples | Minimum control |
 |---|---|---|
 | Standard | copy, low-risk UI, isolated optional adapter | normal review and automated gates |
-| Elevated | model route, parser, retrieval ranking, flag default, workflow retry behavior | domain owner plus targeted evaluations and canary |
+| Elevated | model route, parser, retrieval ranking, flag default, workflow retry behavior, companion extension or desktop adapter capability | domain owner plus targeted evaluations and canary |
 | High risk | authorization, billing, deletion, publication, migration, key policy, source rights | two-person approval, rehearsal, explicit rollback/forward-fix plan |
 | Emergency | active security, integrity, or availability incident | incident commander authorization, bounded change, immediate retrospective |
 
@@ -118,7 +120,7 @@ Destructive database changes, event-field removal, API behavior removal, workflo
 
 ## Release evidence and audit
 
-The release record is append-only. It stores the candidate, approvals, gate results, exceptions, promotion times, cohort changes, rollback or forward-fix actions, and final disposition. Customer-impacting changes must link release notes and support guidance to actual runtime capability rather than planned documentation.
+The release record is append-only. It stores the candidate, approvals, gate results, exceptions, promotion times, cohort changes, rollback or forward-fix actions, CustomerClaimEvidenceRecords, and final disposition. Customer-impacting changes must link release notes and support guidance to actual runtime capability rather than planned documentation. Stronger-than-specification wording follows [`customer-facing-claim-and-evidence-boundary-matrix.md`](customer-facing-claim-and-evidence-boundary-matrix.md).
 
 ## Branch and repository policy
 
